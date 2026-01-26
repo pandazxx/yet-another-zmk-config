@@ -39,7 +39,7 @@ layers:
   - ENTER
   - $$mdi:apple-keyboard-command$$
   - {t: ␣, h: LOW}
-  - ENTER
+  - {t: ENTER, h: CTL}
   - ⏎
   - {t: ␣, h: RAI}
   - $$mdi:apple-keyboard-option$$
@@ -130,12 +130,12 @@ layers:
   - {t: '&studio_unlock', type: held}
   - $$mdi:apple-keyboard-option$$
   CTL:
-  - ↹
-  - '!'
-  - '@'
-  - '#'
-  - $
-  - '%'
+  - BT CLR
+  - BT 1
+  - BT 2
+  - BT 3
+  - BT 4
+  - BT 5
   - ^
   - AMPS
   - KP MULTIPLY
@@ -166,9 +166,9 @@ layers:
   - '}'
   - '|'
   - '~'
-  - $$mdi:apple-keyboard-command$$
-  - '&studio_unlock'
-  - ␣
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {type: held}
   - ⏎
   - '&studio_unlock'
   - $$mdi:apple-keyboard-option$$
@@ -179,3 +179,23 @@ combos:
   k: BACKSPACE
 - p: [19, 20]
   k: BACKSPACE
+- p: [26, 27]
+  k: Gui+C
+- p: [27, 28]
+  k: Gui+V
+- p: [25, 26]
+  k: Gui+Z
+- p: [1, 2, 3, 4]
+  k: '&soft_off'
+- p: [19, 20]
+  k: (
+- p: [21, 22]
+  k: )
+- p: [31, 32]
+  k: '{'
+- p: [33, 34]
+  k: '}'
+- p: [7, 8]
+  k: '['
+- p: [9, 10]
+  k: ']'
