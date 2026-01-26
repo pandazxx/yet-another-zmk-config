@@ -23,12 +23,12 @@
 
         left_del {
             bindings = <&kp BACKSPACE>;
-            key-positions = <15 16 14>;
+            key-positions = <28 27 26>;
         };
 
         right_del {
             bindings = <&kp BACKSPACE>;
-            key-positions = <19 20 21>;
+            key-positions = <31 32 33>;
         };
 
         lcopy {
@@ -44,21 +44,6 @@
         lundo {
             bindings = <&kp LG(Z)>;
             key-positions = <25 26>;
-        };
-
-        softoff {
-            bindings = <&soft_off>;
-            key-positions = <1 2 3 4>;
-        };
-
-        left_parenthesis {
-            bindings = <&kp LEFT_PARENTHESIS>;
-            key-positions = <19 20>;
-        };
-
-        right_parenthesis {
-            bindings = <&kp RIGHT_PARENTHESIS>;
-            key-positions = <21 22>;
         };
 
         left_brace {
@@ -156,10 +141,10 @@
             //                    | GUI |     | SPC |   | ENT |     | ALT |
 
             bindings = <
-&kp GRAVE   &kp N1    &kp N2                &kp N3               &kp N4                &kp N5        &kp N6    &kp N7           &kp N8                 &kp N9           &kp N0  &kp EQUAL
-&trans      &trans    &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT     &kp LEFT  &hmr RGUI DOWN   &hmr RCTRL DOWN_ARROW  &hmr RALT RIGHT  &trans  &trans
-&kp C_MUTE  &kp C_PP  &kp C_PREV            &kp C_VOLUME_UP      &kp C_VOLUME_DOWN     &kp C_NEXT    &trans    &trans           &trans                 &trans           &trans  &trans
-                                            &kp LGUI             &trans                &kp SPACE     &kp RET   &kp KP_NUMBER_0  &kp RALT
+&kp GRAVE       &kp N1     &kp N2                &kp N3               &kp N4                &kp N5       &kp N6    &kp N7           &kp N8                 &kp N9           &kp N0  &kp EQUAL
+&trans          &trans     &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT    &kp LEFT  &hmr RGUI DOWN   &hmr RCTRL DOWN_ARROW  &hmr RALT RIGHT  &trans  &trans
+&kp LEFT_SHIFT  &kp LG(X)  &kp LG(X)             &kp LG(C)            &kp LG(V)             &kp LC(B)    &trans    &trans           &trans                 &trans           &trans  &trans
+                                                 &kp LGUI             &trans                &kp SPACE    &kp RET   &kp KP_NUMBER_0  &kp RALT
             >;
         };
 

@@ -68,12 +68,12 @@ layers:
   - {t: →, h: '$$mdi:apple-keyboard-option$$'}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - MUTE
-  - ⏯
-  - ⏮️
-  - VOLUME UP
-  - VOLUME DOWN
-  - ⏭️
+  - LEFT SHIFT
+  - Gui+X
+  - Gui+X
+  - Gui+C
+  - Gui+V
+  - Ctl+B
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -175,9 +175,9 @@ layers:
 combos:
 - p: [13, 14, 15, 16]
   k: Sft+Ctl+Gui+4
-- p: [15, 16, 14]
+- p: [28, 27, 26]
   k: BACKSPACE
-- p: [19, 20, 21]
+- p: [31, 32, 33]
   k: BACKSPACE
 - p: [26, 27]
   k: Gui+C
@@ -185,12 +185,6 @@ combos:
   k: Gui+V
 - p: [25, 26]
   k: Gui+Z
-- p: [1, 2, 3, 4]
-  k: '&soft_off'
-- p: [19, 20]
-  k: (
-- p: [21, 22]
-  k: )
 - p: [31, 32]
   k: '{'
 - p: [33, 34]
