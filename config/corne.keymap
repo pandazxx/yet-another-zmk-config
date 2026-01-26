@@ -7,12 +7,60 @@
 #include <dt-bindings/led/led.h>
 #include <dt-bindings/zmk/reset.h>
 #include <behaviors.dtsi>
-#include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
 
 &led_strip { chain-length = <27>; };
 
 / {
+    combos {
+        compatible = "zmk,combos";
+
+        screenshot {
+            bindings = <&kp LS(LC(LG(NUMBER_4)))>;
+            key-positions = <13 14 15 16>;
+        };
+
+        left_del {
+            bindings = <&kp BACKSPACE>;
+            key-positions = <15 16>;
+        };
+
+        right_del {
+            bindings = <&kp BACKSPACE>;
+            key-positions = <19 20>;
+        };
+    };
+
+    behaviors {
+        hml: hml {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HML";
+            bindings = <&kp>, <&kp>;
+
+            #binding-cells = <2>;
+            tapping-term-ms = <280>;
+            quick-tap-ms = <175>;
+            flavor = "balanced";
+            require-prior-idle-ms = <150>;
+            hold-trigger-on-release;
+            hold-trigger-key-positions = <6 18 30 31 19 7 8 9 10 22 21 20 32 33 34 39 40 41>;
+        };
+
+        hmr: hmr {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HMR";
+            bindings = <&kp>, <&kp>;
+
+            #binding-cells = <2>;
+            tapping-term-ms = <280>;
+            quick-tap-ms = <175>;
+            flavor = "balanced";
+            require-prior-idle-ms = <150>;
+            hold-trigger-on-release;
+            hold-trigger-key-positions = <2 3 4 5 14 15 16 17 26 27 28 29 36 37 38 1 2 3 4 5 13 14 15 16 17 25 26 27 28 29 36 37 38>;
+        };
+    };
+
     keymap {
         compatible = "zmk,keymap";
 
@@ -26,10 +74,10 @@
             //                    | GUI | LWR | SPC |   | ENT | RSE  | ALT |
 
             bindings = <
-&kp TAB           &kp NUMBER_1  &kp NUMBER_2  &kp NUMBER_3  &kp NUMBER_0  &kp T        &kp Y    &kp U  &kp I      &kp O    &kp P     &kp BSPC
-&mt LCTRL ESCAPE  &kp NUMBER_4  &kp NUMBER_5  &kp NUMBER_6  &kp F         &kp G        &kp H    &kp J  &kp K      &kp L    &kp SEMI  &kp SQT
-&kp LSHFT         &kp NUMBER_7  &kp NUMBER_8  &kp NUMBER_9  &kp V         &kp B        &kp N    &kp M  &kp COMMA  &kp DOT  &kp FSLH  &kp ESC
-                                              &kp LGUI      &kp SPACE     &kp ENTER    &kp RET  &mo 2  &kp RALT
+&kp TAB           &kp Q              &kp W            &kp E         &kp R        &kp T        &kp Y    &kp U        &kp I         &kp O        &kp P                  &kp BSPC
+&mt LCTRL ESCAPE  &hml LEFT_SHIFT A  &hml LEFT_ALT S  &hml LCTRL D  &hml LGUI F  &kp G        &kp H    &hmr RGUI J  &hmr RCTRL K  &hmr RALT L  &hmr RSHIFT SEMICOLON  &kp SQT
+&kp LSHFT         &kp Z              &kp X            &kp C         &kp V        &kp B        &kp N    &kp M        &kp COMMA     &kp DOT      &kp FSLH               &kp ENTER
+                                                      &kp LGUI      &lt 1 SPACE  &kp ENTER    &kp RET  &lt 2 SPACE  &kp RALT
             >;
         };
 
@@ -43,10 +91,10 @@
             //                    | GUI |     | SPC |   | ENT |     | ALT |
 
             bindings = <
-&kp TAB     &kp N1        &kp N2        &kp N3        &kp N4        &kp N5          &kp N6    &kp N7    &kp N8    &kp N9     &kp N0  &kp BSPC
-&bt BT_CLR  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4    &kp LEFT  &kp DOWN  &kp UP    &kp RIGHT  &trans  &trans
-&kp LSHFT   &trans        &trans        &trans        &trans        &trans          &trans    &trans    &trans    &trans     &trans  &trans
-                                        &kp LGUI      &trans        &kp SPACE       &kp RET   &trans    &kp RALT
+&kp GRAVE   &kp N1    &kp N2                &kp N3               &kp N4                &kp N5        &kp N6    &kp N7           &kp N8                 &kp N9           &kp N0  &kp EQUAL
+&trans      &trans    &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT     &kp LEFT  &hmr RGUI DOWN   &hmr RCTRL DOWN_ARROW  &hmr RALT RIGHT  &trans  &trans
+&kp C_MUTE  &kp C_PP  &kp C_PREV            &kp C_VOLUME_UP      &kp C_VOLUME_DOWN     &kp C_NEXT    &trans    &trans           &trans                 &trans           &trans  &trans
+                                            &kp LGUI             &trans                &kp SPACE     &kp RET   &kp KP_NUMBER_0  &kp RALT
             >;
         };
 
