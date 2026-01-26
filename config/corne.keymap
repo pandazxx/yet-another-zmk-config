@@ -23,12 +23,12 @@
 
         left_del {
             bindings = <&kp BACKSPACE>;
-            key-positions = <15 16>;
+            key-positions = <15 16 14>;
         };
 
         right_del {
             bindings = <&kp BACKSPACE>;
-            key-positions = <19 20>;
+            key-positions = <19 20 21>;
         };
 
         lcopy {
@@ -90,7 +90,7 @@
 
             #binding-cells = <2>;
             tapping-term-ms = <280>;
-            quick-tap-ms = <175>;
+            quick-tap-ms = <100>;
             flavor = "balanced";
             require-prior-idle-ms = <150>;
             hold-trigger-on-release;
@@ -104,7 +104,7 @@
 
             #binding-cells = <2>;
             tapping-term-ms = <280>;
-            quick-tap-ms = <175>;
+            quick-tap-ms = <100>;
             flavor = "balanced";
             require-prior-idle-ms = <150>;
             hold-trigger-on-release;

@@ -175,9 +175,9 @@ layers:
 combos:
 - p: [13, 14, 15, 16]
   k: Sft+Ctl+Gui+4
-- p: [15, 16]
+- p: [15, 16, 14]
   k: BACKSPACE
-- p: [19, 20]
+- p: [19, 20, 21]
   k: BACKSPACE
 - p: [26, 27]
   k: Gui+C
