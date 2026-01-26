@@ -141,9 +141,9 @@
             //                    | GUI |     | SPC |   | ENT |     | ALT |
 
             bindings = <
-&kp GRAVE       &kp N1     &kp N2                &kp N3               &kp N4                &kp N5       &kp N6    &kp N7           &kp N8                 &kp N9           &kp N0  &kp EQUAL
-&trans          &trans     &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT    &kp LEFT  &hmr RGUI DOWN   &hmr RCTRL DOWN_ARROW  &hmr RALT RIGHT  &trans  &trans
-&kp LEFT_SHIFT  &kp LG(X)  &kp LG(X)             &kp LG(C)            &kp LG(V)             &kp LC(B)    &trans    &trans           &trans                 &trans           &trans  &trans
+&kp GRAVE       &kp N1     &kp N2                &kp N3               &kp N4                &kp N5       &kp N6    &kp N7           &kp N8               &kp N9           &kp N0  &kp EQUAL
+&trans          &trans     &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT    &kp LEFT  &hmr RGUI DOWN   &hmr RCTRL UP_ARROW  &hmr RALT RIGHT  &trans  &trans
+&kp LEFT_SHIFT  &kp LG(X)  &kp LG(X)             &kp LG(C)            &kp LG(V)             &kp LC(B)    &trans    &trans           &trans               &trans           &trans  &trans
                                                  &kp LGUI             &trans                &kp SPACE    &kp RET   &kp KP_NUMBER_0  &kp RALT
             >;
         };

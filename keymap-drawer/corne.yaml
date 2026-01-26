@@ -64,7 +64,7 @@ layers:
   - →
   - ←
   - {t: ↓, h: '$$mdi:apple-keyboard-command$$'}
-  - {t: DOWN ARROW, h: '$$mdi:apple-keyboard-control$$'}
+  - {t: UP ARROW, h: '$$mdi:apple-keyboard-control$$'}
   - {t: →, h: '$$mdi:apple-keyboard-option$$'}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
