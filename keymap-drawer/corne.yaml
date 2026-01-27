@@ -172,6 +172,49 @@ layers:
   - ⏎
   - '&studio_unlock'
   - $$mdi:apple-keyboard-option$$
+  MOUSE:
+  - BT CLR
+  - BT 1
+  - BT 2
+  - BT 3
+  - BT 4
+  - BT 5
+  - ^
+  - AMPS
+  - KP MULTIPLY
+  - (
+  - )
+  - $$mdi:backspace-outline$$
+  - $$mdi:apple-keyboard-control$$
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - '-'
+  - '='
+  - '['
+  - ']'
+  - \
+  - '`'
+  - $$mdi:apple-keyboard-shift$$
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - _
+  - +
+  - '{'
+  - '}'
+  - '|'
+  - '~'
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - ⏎
+  - '&studio_unlock'
+  - $$mdi:apple-keyboard-option$$
 combos:
 - p: [13, 14, 15, 16]
   k: Sft+Ctl+Gui+4
