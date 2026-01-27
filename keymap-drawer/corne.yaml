@@ -173,18 +173,18 @@ layers:
   - '&studio_unlock'
   - $$mdi:apple-keyboard-option$$
   MOUSE:
-  - BT CLR
-  - BT 1
-  - BT 2
-  - BT 3
-  - BT 4
-  - BT 5
-  - ^
-  - AMPS
-  - KP MULTIPLY
-  - (
-  - )
-  - $$mdi:backspace-outline$$
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - $$mdi:apple-keyboard-control$$
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
