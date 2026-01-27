@@ -175,7 +175,10 @@
             >;
         };
 
-        extra_2 { status = "reserved"; };
+        extra_2 {
+            display-name="MOUSE";
+            bindings=<>;
+        };
 
         extra_3 { status = "reserved"; };
     };
