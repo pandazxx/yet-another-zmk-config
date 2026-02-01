@@ -74,12 +74,12 @@ layers:
   - Gui+C
   - Gui+V
   - Ctl+B
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - ⏮️
+  - VOLUME DOWN
+  - VOLUME UP
+  - ⏭️
+  - MUTE
+  - ⏯
   - $$mdi:apple-keyboard-command$$
   - {type: held}
   - ␣
@@ -87,7 +87,7 @@ layers:
   - KP 0
   - $$mdi:apple-keyboard-option$$
   RAI:
-  - ↹
+  - '`'
   - '!'
   - '@'
   - '#'
