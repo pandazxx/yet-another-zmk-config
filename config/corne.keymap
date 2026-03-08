@@ -66,6 +66,11 @@
             bindings = <&kp RIGHT_BRACKET>;
             key-positions = <9 10>;
         };
+
+        ctrl-a {
+            bindings = <&kp LC(A)>;
+            key-positions = <28 29>;
+        };
     };
 
     behaviors {
@@ -142,10 +147,10 @@
             //                    | GUI |     | SPC |   | ENT |     | ALT |
 
             bindings = <
-&kp GRAVE       &kp N1     &kp N2                &kp N3               &kp N4                &kp N5       &kp N6      &kp N7             &kp N8               &kp N9           &kp N0      &kp EQUAL
-&trans          &trans     &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT    &kp LEFT    &hmr RGUI DOWN     &hmr RCTRL UP_ARROW  &hmr RALT RIGHT  &trans      &trans
-&kp LEFT_SHIFT  &kp LG(X)  &kp LG(X)             &kp LG(C)            &kp LG(V)             &kp LC(B)    &kp C_PREV  &kp C_VOLUME_DOWN  &kp C_VOLUME_UP      &kp C_NEXT       &kp C_MUTE  &kp C_PP
-                                                 &kp LGUI             &trans                &kp SPACE    &kp RET     &kp KP_NUMBER_0    &kp RALT
+&kp GRAVE       &kp N1     &kp N2                &kp N3               &kp N4                &kp N5                  &kp N6      &kp N7             &kp N8               &kp N9           &kp N0                      &kp EQUAL
+&trans          &trans     &hml LALT LEFT_ARROW  &hml LCTRL UP_ARROW  &hml LGUI DOWN_ARROW  &kp RIGHT               &kp LEFT    &hmr RGUI DOWN     &hmr RCTRL UP_ARROW  &hmr RALT RIGHT  &hmr RIGHT_SHIFT SEMICOLON  &trans
+&kp LEFT_SHIFT  &kp LG(X)  &kp LG(X)             &kp LG(C)            &kp LG(V)             &kp LC(B)               &kp C_PREV  &kp C_VOLUME_DOWN  &kp C_VOLUME_UP      &kp C_NEXT       &kp C_MUTE                  &kp C_PP
+                                                 &kp LGUI             &trans                &mt LEFT_SHIFT SPACE    &kp RET     &kp KP_NUMBER_0    &kp RALT
             >;
         };
 

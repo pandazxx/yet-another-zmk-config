@@ -66,7 +66,7 @@ layers:
   - {t: ↓, h: '$$mdi:apple-keyboard-command$$'}
   - {t: UP ARROW, h: '$$mdi:apple-keyboard-control$$'}
   - {t: →, h: '$$mdi:apple-keyboard-option$$'}
-  - {t: ▽, type: trans}
+  - {t: ;, h: RIGHT SHIFT}
   - {t: ▽, type: trans}
   - LEFT SHIFT
   - Gui+X
@@ -82,7 +82,7 @@ layers:
   - ⏯
   - $$mdi:apple-keyboard-command$$
   - {type: held}
-  - ␣
+  - {t: ␣, h: LEFT SHIFT}
   - ⏎
   - KP 0
   - $$mdi:apple-keyboard-option$$
@@ -236,3 +236,5 @@ combos:
   k: '['
 - p: [9, 10]
   k: ']'
+- p: [28, 29]
+  k: Ctl+A
