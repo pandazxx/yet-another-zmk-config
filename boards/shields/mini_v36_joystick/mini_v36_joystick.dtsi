@@ -1,0 +1,214 @@
+/*
+ * Copyright (c) 2024 Mini V36 Joystick contributors
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Mini V36 Joystick — 36-key unibody keyboard with pointing device
+ * Layout: 5×3 + 3 thumb keys per side (18+18 = 36 total), ±7° rotation
+ * MCU: nRF52840 (nice_nano_v2 or compatible, pro_micro footprint)
+ * KLE: https://gist.githubusercontent.com/pandazxx/9d115ad8b70645e662613269cbbc7cef/
+ *
+ * Matrix: 10 columns × 4 rows  (col2row, active-high with pull-down)
+ *
+ * Key positions:
+ *  0  1  2  3  4    5  6  7  8  9
+ * 10 11 12 13 14   15 16 17 18 19
+ * 20 21 22 23 24   25 26 27 28 29
+ *          30 31 32   33 34 35
+ *
+ * GPIO pin assignments (pro_micro numbering, adjust to match your PCB):
+ *   Rows:    4  5  6  7
+ *   Cols:    0  1  2  3  8  9  10  14  15  16
+ *
+ * Remaining pins (17, 18, 19, 20, 21) are used by the joystick module:
+ *
+ *   ┌──────────────────────────────────────────────────────────────────┐
+ *   │  ANALOG JOYSTICK  (CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG=y)      │
+ *   │  X-axis  → pro_micro 20  (nRF52840 AIN4 / P0.28)               │
+ *   │  Y-axis  → pro_micro 21  (nRF52840 AIN6 / P0.30)               │
+ *   │  Button  → pro_micro 17                                          │
+ *   │  Compatible with OLED (I2C uses pins 18/19 independently).      │
+ *   ├──────────────────────────────────────────────────────────────────┤
+ *   │  5-WAY TACTILE SWITCH  (CONFIG_MINI_V36_JOYSTICK_TYPE_5WAY=y)  │
+ *   │  UP     → pro_micro 17                                           │
+ *   │  DOWN   → pro_micro 18  ← NOTE: conflicts with I2C SDA          │
+ *   │  LEFT   → pro_micro 19  ← NOTE: conflicts with I2C SCL          │
+ *   │  RIGHT  → pro_micro 20                                           │
+ *   │  CENTER → pro_micro 21                                           │
+ *   │  Disable OLED (CONFIG_ZMK_DISPLAY=n) when using 5-way switch.   │
+ *   └──────────────────────────────────────────────────────────────────┘
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,matrix-transform = &default_transform;
+    };
+
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <10>;
+        rows = <4>;
+        // Left side (cols 0-4) | Right side (cols 5-9)
+        // | Q  | W  | E  | R  | T  |   | Y  | U  | I  | O  | P  |
+        // | A  | S  | D  | F  | G  |   | H  | J  | K  | L  |    |
+        // | Z  | X  | C  | V  | B  |   | N  | M  | ,  |    |    |
+        //           |LTH1|LTH2|LTH3|   |RTH1|RTH2|RTH3|
+        //
+        // Positions 9,19,28,29 (right cols 4 & 3-4 of rows 0-2) are
+        // physically occupied by the joystick module → bind to &none.
+        map = <
+RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4)   RC(0,5) RC(0,6) RC(0,7) RC(0,8) RC(0,9)
+RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4)   RC(1,5) RC(1,6) RC(1,7) RC(1,8) RC(1,9)
+RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)   RC(2,5) RC(2,6) RC(2,7) RC(2,8) RC(2,9)
+                        RC(3,2) RC(3,3) RC(3,4)   RC(3,5) RC(3,6) RC(3,7)
+        >;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+        wakeup-source;
+        diode-direction = "col2row";
+
+        row-gpios
+            = <&pro_micro 4  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 5  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 6  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 7  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+
+        col-gpios
+            = <&pro_micro 0  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 1  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 2  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 3  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 8  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 9  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 10 GPIO_ACTIVE_HIGH>
+            , <&pro_micro 14 GPIO_ACTIVE_HIGH>
+            , <&pro_micro 15 GPIO_ACTIVE_HIGH>
+            , <&pro_micro 16 GPIO_ACTIVE_HIGH>
+            ;
+    };
+
+    /* ═══════════════════════════════════════════════════════════════════
+     *  ANALOG JOYSTICK — two-axis ADC-based pointing device
+     *  Enable: CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG=y
+     * ═══════════════════════════════════════════════════════════════════ */
+#if defined(CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG)
+
+    analog_joystick: analog_joystick {
+        compatible = "zephyr,analog-axis";
+        poll-period-ms = <15>;
+
+        /* X-axis: VRx → pro_micro 20 (P0.28, AIN4)
+         * Adjust in-min/in-max/in-deadzone to calibrate for your module. */
+        axis-x {
+            io-channels = <&adc 4>;
+            in-deadzone = <150>;
+            in-min = <50>;
+            in-max = <4000>;
+            out-min = <-127>;
+            out-max = <127>;
+            zephyr,axis = <INPUT_ABS_X>;
+        };
+
+        /* Y-axis: VRy → pro_micro 21 (P0.30, AIN6)
+         * Add invert-input; if Y movement is reversed. */
+        axis-y {
+            io-channels = <&adc 6>;
+            in-deadzone = <150>;
+            in-min = <50>;
+            in-max = <4000>;
+            out-min = <-127>;
+            out-max = <127>;
+            zephyr,axis = <INPUT_ABS_Y>;
+            invert-input;
+        };
+    };
+
+    /* Joystick press-down button → pro_micro 17 */
+    joystick_button: joystick_button {
+        compatible = "gpio-keys";
+        wakeup-source;
+        joystick_btn: joystick_btn {
+            gpios = <&pro_micro 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_0>;
+        };
+    };
+
+    /* Wire analog joystick into ZMK pointing subsystem */
+    joystick_listener: joystick_listener {
+        compatible = "zmk,input-listener";
+        device = <&analog_joystick>;
+    };
+
+#endif /* CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG */
+
+    /* ═══════════════════════════════════════════════════════════════════
+     *  5-WAY TACTILE SWITCH — GPIO-based navigation switch
+     *  Enable: CONFIG_MINI_V36_JOYSTICK_TYPE_5WAY=y
+     *  NOTE: Disable OLED (CONFIG_ZMK_DISPLAY=n) — pins 18/19 conflict
+     *        with I2C SDA/SCL used by the OLED display.
+     * ═══════════════════════════════════════════════════════════════════ */
+#if defined(CONFIG_MINI_V36_JOYSTICK_TYPE_5WAY)
+
+    five_way_switch: five_way_switch {
+        compatible = "gpio-keys";
+        wakeup-source;
+
+        nav_up: nav_up {
+            gpios = <&pro_micro 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_DPAD_UP>;
+        };
+        nav_down: nav_down {
+            gpios = <&pro_micro 18 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_DPAD_DOWN>;
+        };
+        nav_left: nav_left {
+            gpios = <&pro_micro 19 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_DPAD_LEFT>;
+        };
+        nav_right: nav_right {
+            gpios = <&pro_micro 20 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_DPAD_RIGHT>;
+        };
+        nav_center: nav_center {
+            gpios = <&pro_micro 21 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_0>;
+        };
+    };
+
+    five_way_listener: five_way_listener {
+        compatible = "zmk,input-listener";
+        device = <&five_way_switch>;
+    };
+
+#endif /* CONFIG_MINI_V36_JOYSTICK_TYPE_5WAY */
+};
+
+/* ── Optional OLED display (I2C, SSD1306) ──────────────────────────────
+ * Only enable when CONFIG_ZMK_DISPLAY=y.
+ * Conflicts with 5-way switch (shares pins 18/19). */
+&pro_micro_i2c {
+    status = "okay";
+
+    oled: ssd1306@3c {
+        compatible = "solomon,ssd1306fb";
+        reg = <0x3c>;
+        width = <128>;
+        height = <32>;
+        segment-offset = <0>;
+        page-offset = <0>;
+        display-offset = <0>;
+        multiplex-ratio = <31>;
+        segment-remap;
+        com-invdir;
+        com-sequential;
+        inversion-on;
+        prechargep = <0x22>;
+    };
+};

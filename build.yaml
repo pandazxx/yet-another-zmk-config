@@ -276,6 +276,31 @@ include:
     snippet: studio-rpc-usb-uart
   ### SPLITKB AURORA SOFLE END ###
 
+  ### MINI V36 JOYSTICK START ###
+  # Unibody keyboard — one MCU, no split
+
+  # 5-way tactile switch (no OLED — pins 18/19 conflict with I2C)
+  - board: nice_nano_v2
+    shield: mini_v36_joystick
+    cmake-args: -DCONFIG_MINI_V36_JOYSTICK_TYPE_5WAY=y -DCONFIG_ZMK_DISPLAY=n
+    artifact-name: mini_v36_joystick_5way
+    snippet: studio-rpc-usb-uart
+
+  # Analog joystick + OLED display
+  - board: nice_nano_v2
+    shield: mini_v36_joystick nice_oled
+    cmake-args: -DCONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG=y
+    artifact-name: mini_v36_joystick_analog_oled
+    snippet: studio-rpc-usb-uart
+
+  # Analog joystick + nice!view (e-paper)
+  - board: nice_nano_v2
+    shield: mini_v36_joystick nice_view_adapter nice_epaper
+    cmake-args: -DCONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG=y
+    artifact-name: mini_v36_joystick_analog_view
+    snippet: studio-rpc-usb-uart
+  ### MINI V36 JOYSTICK END ###
+
   ### SETTINGS_RESET START ###
   - board: nice_nano_v2
     shield: settings_reset

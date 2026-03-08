@@ -1,0 +1,170 @@
+/*
+ * Copyright (c) 2024 Mini V36 Joystick contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Mini V36 Joystick — 36-key unibody keyboard keymap
+ *
+ * Key positions (36 total):
+ *  0  1  2  3  4    5  6  7  8  9
+ * 10 11 12 13 14   15 16 17 18 19
+ * 20 21 22 23 24   25 26 27 28 29
+ *          30 31 32   33 34 35
+ *
+ * Positions 9, 19, 28, 29 (right side, joystick area) are physically
+ * occupied by the joystick module — bound to &none below.
+ *
+ * Layers:
+ *   0 = BASE  (QWERTY with home-row mods)
+ *   1 = NAV   (navigation, numbers)
+ *   2 = SYM   (symbols, function keys)
+ *   3 = MOUSE (pointer / mouse buttons — active while held)
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/pointing.h>
+
+/* ── Home-row mod timings ──────────────────────────────────────────────── */
+#define TAPPING_TERM 200
+#define QUICK_TAP    150
+
+/ {
+    behaviors {
+        hml: hml {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HML";
+            bindings = <&kp>, <&kp>;
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <TAPPING_TERM>;
+            quick-tap-ms = <QUICK_TAP>;
+            require-prior-idle-ms = <125>;
+            hold-trigger-key-positions = <
+                5  6  7  8  9
+               15 16 17 18 19
+               25 26 27 28 29
+               33 34 35
+            >;
+            hold-trigger-on-release;
+        };
+
+        hmr: hmr {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HMR";
+            bindings = <&kp>, <&kp>;
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <TAPPING_TERM>;
+            quick-tap-ms = <QUICK_TAP>;
+            require-prior-idle-ms = <125>;
+            hold-trigger-key-positions = <
+                0  1  2  3  4
+               10 11 12 13 14
+               20 21 22 23 24
+               30 31 32
+            >;
+            hold-trigger-on-release;
+        };
+    };
+
+    combos {
+        compatible = "zmk,combos";
+
+        /* Backspace: left three middle keys */
+        combo_bspc_left {
+            bindings = <&kp BACKSPACE>;
+            key-positions = <20 21 22>;
+            timeout-ms = <50>;
+        };
+
+        /* Backspace: right three middle keys */
+        combo_bspc_right {
+            bindings = <&kp BACKSPACE>;
+            key-positions = <25 26 27>;
+            timeout-ms = <50>;
+        };
+
+        /* Escape: top two left inner keys */
+        combo_esc {
+            bindings = <&kp ESCAPE>;
+            key-positions = <3 4>;
+            timeout-ms = <50>;
+        };
+
+        /* Enter: top two right inner keys */
+        combo_enter {
+            bindings = <&kp ENTER>;
+            key-positions = <5 6>;
+            timeout-ms = <50>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        /* ── Layer 0: BASE ──────────────────────────────────────────── */
+        base_layer {
+            display-name = "Base";
+            bindings = <
+// ╭────────────────────────────────────────────────╮ ╭────────────────────────────────────────────────╮
+     &kp Q          &kp W          &kp E          &kp R          &kp T            &kp Y          &kp U          &kp I          &kp O          &kp P
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &hml LGUI A    &hml LALT S    &hml LCTL D    &hml LSFT F    &kp G            &kp H          &hmr RSFT J    &hmr RCTL K    &hmr RALT L    &none
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &kp Z          &kp X          &kp C          &kp V          &kp B            &kp N          &kp M          &kp COMMA      &none          &none
+// ╰────────────────────────────────────────────────┤ ├────────────────────────────────────────────────╯
+                                   &lt 2 TAB      &lt 1 SPACE    &kp LSFT         &kp RSFT       &lt 1 BSPC     &lt 2 DEL
+//                                 ╰───────────────────────────────────────────────────────────────────╯
+            >;
+        };
+
+        /* ── Layer 1: NAV ───────────────────────────────────────────── */
+        nav_layer {
+            display-name = "Nav";
+            bindings = <
+// ╭────────────────────────────────────────────────╮ ╭────────────────────────────────────────────────╮
+     &kp N1         &kp N2         &kp N3         &kp N4         &kp N5           &kp N6         &kp N7         &kp N8         &kp N9         &kp N0
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &kp LGUI       &kp LALT       &kp LCTL       &kp LSFT       &kp PGUP         &kp LEFT       &kp DOWN       &kp UP         &kp RIGHT      &none
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &kp LC(Z)      &kp LC(X)      &kp LC(C)      &kp LC(V)      &kp PGDN         &kp HOME       &kp END        &kp INS        &none          &none
+// ╰────────────────────────────────────────────────┤ ├────────────────────────────────────────────────╯
+                                   &trans         &trans         &trans           &trans         &trans         &lt 3 ENTER
+//                                 ╰───────────────────────────────────────────────────────────────────╯
+            >;
+        };
+
+        /* ── Layer 2: SYM ───────────────────────────────────────────── */
+        sym_layer {
+            display-name = "Sym";
+            bindings = <
+// ╭────────────────────────────────────────────────╮ ╭────────────────────────────────────────────────╮
+     &kp EXCL       &kp AT         &kp HASH       &kp DLLR       &kp PRCNT        &kp CARET      &kp AMPS       &kp ASTRK      &kp LPAR       &kp RPAR
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &kp GRAVE      &kp TILDE      &kp MINUS      &kp EQUAL      &kp LBKT         &kp RBKT       &kp SEMI       &kp COLON      &kp SQT        &none
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &kp BSLH       &kp PIPE       &kp UNDER      &kp PLUS       &kp LBRC         &kp RBRC       &kp LT         &kp GT         &none          &none
+// ╰────────────────────────────────────────────────┤ ├────────────────────────────────────────────────╯
+                                   &trans         &lt 3 SPACE    &trans           &trans         &trans         &trans
+//                                 ╰───────────────────────────────────────────────────────────────────╯
+            >;
+        };
+
+        /* ── Layer 3: MOUSE / BT ────────────────────────────────────── */
+        mouse_layer {
+            display-name = "Mouse";
+            bindings = <
+// ╭────────────────────────────────────────────────╮ ╭────────────────────────────────────────────────╮
+     &bt BT_SEL 0   &bt BT_SEL 1   &bt BT_SEL 2   &bt BT_SEL 3   &bt BT_CLR       &none          &none          &none          &none          &none
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &none          &none          &none          &none          &none            &mmv MOVE_LEFT &mmv MOVE_DOWN &mmv MOVE_UP   &mmv MOVE_RIGHT &none
+// ├────────────────────────────────────────────────┤ ├────────────────────────────────────────────────┤
+     &none          &none          &none          &none          &none            &msc SCRL_LEFT &msc SCRL_DOWN &msc SCRL_UP   &msc SCRL_RIGHT &none
+// ╰────────────────────────────────────────────────┤ ├────────────────────────────────────────────────╯
+                                   &trans         &trans         &mkp LCLK        &mkp RCLK      &mkp MCLK      &trans
+//                                 ╰───────────────────────────────────────────────────────────────────╯
+            >;
+        };
+    };
+};
