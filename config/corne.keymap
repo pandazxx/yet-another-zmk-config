@@ -99,7 +99,7 @@
             flavor = "hold-preferred";
             require-prior-idle-ms = <150>;
             hold-trigger-on-release;
-            hold-trigger-key-positions = <2 3 4 5 14 15 16 17 26 27 28 29 36 37 38 1 2 3 4 5 13 14 15 16 17 25 26 27 28 29 36 37 38>;
+            hold-trigger-key-positions = <2 3 4 5 14 15 16 17 26 27 28 29 36 37 38 1 2 3 4 5 13 14 15 16 17 25 26 27 28 29 36 37 38 0 12 24>;
         };
 
         new_behavior: new_behavior {
