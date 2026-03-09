@@ -45,7 +45,52 @@
 / {
     chosen {
         zmk,kscan = &kscan0;
-        zmk,matrix-transform = &default_transform;
+        zmk,physical-layout = &default_layout;
+    };
+
+    default_layout: default_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "Mini V36 Joystick";
+        transform = <&default_transform>;
+        keys
+        /* w    h     x     y    rot   rx    ry  */
+            = <&key_physical_attrs 100 100    0   75     0    0    0>  /*  0 Q   */
+            , <&key_physical_attrs 100 100  100   75     0    0    0>  /*  1 W   */
+            , <&key_physical_attrs 100 100  200   75     0    0    0>  /*  2 E   */
+            , <&key_physical_attrs 100 100  300   75     0    0    0>  /*  3 R   */
+            , <&key_physical_attrs 100 100  400   75     0    0    0>  /*  4 T   */
+            , <&key_physical_attrs 100 100  550   75     0    0    0>  /*  5 Y   */
+            , <&key_physical_attrs 100 100  650   75     0    0    0>  /*  6 U   */
+            , <&key_physical_attrs 100 100  750   75     0    0    0>  /*  7 I   */
+            , <&key_physical_attrs 100 100  850   75     0    0    0>  /*  8 O   */
+            , <&key_physical_attrs 100 100  950   75     0    0    0>  /*  9 P   */
+            , <&key_physical_attrs 100 100    0  175     0    0    0>  /* 10 A   */
+            , <&key_physical_attrs 100 100  100  175     0    0    0>  /* 11 S   */
+            , <&key_physical_attrs 100 100  200  175     0    0    0>  /* 12 D   */
+            , <&key_physical_attrs 100 100  300  175     0    0    0>  /* 13 F   */
+            , <&key_physical_attrs 100 100  400  175     0    0    0>  /* 14 G   */
+            , <&key_physical_attrs 100 100  550  175     0    0    0>  /* 15 H   */
+            , <&key_physical_attrs 100 100  650  175     0    0    0>  /* 16 J   */
+            , <&key_physical_attrs 100 100  750  175     0    0    0>  /* 17 K   */
+            , <&key_physical_attrs 100 100  850  175     0    0    0>  /* 18 L   */
+            , <&key_physical_attrs 100 100  950  175     0    0    0>  /* 19 jstkY */
+            , <&key_physical_attrs 100 100    0  275     0    0    0>  /* 20 Z   */
+            , <&key_physical_attrs 100 100  100  275     0    0    0>  /* 21 X   */
+            , <&key_physical_attrs 100 100  200  275     0    0    0>  /* 22 C   */
+            , <&key_physical_attrs 100 100  300  275     0    0    0>  /* 23 V   */
+            , <&key_physical_attrs 100 100  400  275     0    0    0>  /* 24 B   */
+            , <&key_physical_attrs 100 100  550  275     0    0    0>  /* 25 N   */
+            , <&key_physical_attrs 100 100  650  275     0    0    0>  /* 26 M   */
+            , <&key_physical_attrs 100 100  750  275     0    0    0>  /* 27 ,   */
+            , <&key_physical_attrs 100 100  850  275     0    0    0>  /* 28 jstkX */
+            , <&key_physical_attrs 100 100  950  275     0    0    0>  /* 29 jstk */
+            , <&key_physical_attrs 100 100  200  400     0    0    0>  /* 30 LTH1 */
+            , <&key_physical_attrs 100 100  300  400     0    0    0>  /* 31 LTH2 */
+            , <&key_physical_attrs 100 100  400  400     0    0    0>  /* 32 LTH3 */
+            , <&key_physical_attrs 100 100  550  400     0    0    0>  /* 33 RTH1 */
+            , <&key_physical_attrs 100 100  650  400     0    0    0>  /* 34 RTH2 */
+            , <&key_physical_attrs 100 100  750  400     0    0    0>  /* 35 RTH3 */
+            ;
     };
 
     default_transform: keymap_transform_0 {
