@@ -4,7 +4,7 @@
 if SHIELD_MINI_V36_JOYSTICK
 
 config ZMK_KEYBOARD_NAME
-    default "Mini V36 Joystick"
+    default "Mini V36 Jstk"
 
 if ZMK_DISPLAY
 

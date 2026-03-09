@@ -51,7 +51,7 @@
 
     default_layout: default_layout {
         compatible = "zmk,physical-layout";
-        display-name = "Mini V36 Joystick";
+        display-name = "Mini V36 Jstk";
         transform = <&default_transform>;
         keys
         /* w    h     x     y    rot   rx    ry  */
