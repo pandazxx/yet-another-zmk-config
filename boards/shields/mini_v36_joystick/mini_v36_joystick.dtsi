@@ -47,6 +47,7 @@
     chosen {
         zmk,kscan = &kscan0;
         zmk,physical-layout = &default_layout;
+        zephyr,display = &oled;
     };
 
     default_layout: default_layout {
