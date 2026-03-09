@@ -33,29 +33,9 @@ endchoice
 
 endif # LVGL
 
-# ── Analog joystick driver dependencies ───────────────────────────────────
-if MINI_V36_JOYSTICK_TYPE_ANALOG
-
-config ADC
-    default y
-
-config ANALOG_AXIS
-    default y
-
-config INPUT
-    default y
-
-endif # MINI_V36_JOYSTICK_TYPE_ANALOG
-
-# ── 5-way tactile switch driver dependencies ──────────────────────────────
-if MINI_V36_JOYSTICK_TYPE_5WAY
-
-config INPUT
-    default y
-
-config GPIO_KEYS
-    default y
-
-endif # MINI_V36_JOYSTICK_TYPE_5WAY
+# Driver dependencies for each joystick type are set in the .conf files
+# (config/mini_v36_joystick.conf and mini_v36_joystick.conf) rather than
+# here, because Kconfig.defconfig is parsed globally for all shields and
+# ANALOG_AXIS / GPIO_KEYS may not be defined upstream in this ZMK version.
 
 endif # SHIELD_MINI_V36_JOYSTICK
