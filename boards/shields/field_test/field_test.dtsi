@@ -18,7 +18,7 @@
  * Analog joystick (ADC-based):
  *   X-axis → pro_micro 20  (nRF52840 AIN4 / P0.28)
  *   Y-axis → pro_micro 21  (nRF52840 AIN6 / P0.30)
- *   Button → pro_micro 17
+ *   Button → pro_micro 17  (not used as gpio-keys; assign to a matrix key if needed)
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -101,16 +101,6 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
             out-max = <127>;
             zephyr,axis = <INPUT_ABS_Y>;
             invert-input;
-        };
-    };
-
-    /* Joystick press-down button → pro_micro 17 */
-    joystick_button: joystick_button {
-        compatible = "gpio-keys";
-        wakeup-source;
-        joystick_btn: joystick_btn {
-            gpios = <&pro_micro 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-            zephyr,code = <INPUT_BTN_0>;
         };
     };
 
