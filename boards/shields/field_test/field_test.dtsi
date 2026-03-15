@@ -74,6 +74,7 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
      *  ANALOG JOYSTICK — two-axis ADC-based pointing device
      *  ADC channels configured in boards/nice_nano_v2.overlay
      * ═══════════════════════════════════════════════════════════════════ */
+#if defined(CONFIG_FIELD_TEST_ANALOG)
 
     analog_joystick: analog_joystick {
         compatible = "zephyr,analog-axis";
@@ -109,4 +110,6 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
         compatible = "zmk,input-listener";
         device = <&analog_joystick>;
     };
+
+#endif /* CONFIG_FIELD_TEST_ANALOG */
 };

@@ -3,3 +3,11 @@
 
 config SHIELD_FIELD_TEST
     def_bool $(shields_list_contains,field_test)
+
+if SHIELD_FIELD_TEST
+
+config FIELD_TEST_ANALOG
+    bool
+    default y
+
+endif
