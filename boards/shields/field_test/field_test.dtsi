@@ -1,0 +1,122 @@
+/*
+ * Copyright (c) 2024 Field Test contributors
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Field Test — 4-key unibody test keyboard with analog joystick
+ * MCU: nRF52840 (nice_nano_v2, pro_micro footprint)
+ *
+ * Matrix: 4 columns × 1 row  (col2row, active-high with pull-down)
+ *
+ * Key positions:
+ *   0  1  2  3
+ *
+ * GPIO pin assignments (pro_micro numbering):
+ *   Row:  4
+ *   Cols: 0  1  2  3
+ *
+ * Analog joystick (ADC-based):
+ *   X-axis → pro_micro 20  (nRF52840 AIN4 / P0.28)
+ *   Y-axis → pro_micro 21  (nRF52840 AIN6 / P0.30)
+ *   Button → pro_micro 17
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <physical_layouts.dtsi>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,physical-layout = &default_layout;
+    };
+
+    default_layout: default_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "Field Test";
+        transform = <&default_transform>;
+        keys
+        /* w    h     x     y    rot   rx    ry  */
+            = <&key_physical_attrs 100 100    0    0     0    0    0>  /* 0 */
+            , <&key_physical_attrs 100 100  100    0     0    0    0>  /* 1 */
+            , <&key_physical_attrs 100 100  200    0     0    0    0>  /* 2 */
+            , <&key_physical_attrs 100 100  300    0     0    0    0>  /* 3 */
+            ;
+    };
+
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <4>;
+        rows = <1>;
+        map = <
+RC(0,0) RC(0,1) RC(0,2) RC(0,3)
+        >;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+        wakeup-source;
+        diode-direction = "col2row";
+
+        row-gpios
+            = <&pro_micro 4  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+
+        col-gpios
+            = <&pro_micro 0  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 1  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 2  GPIO_ACTIVE_HIGH>
+            , <&pro_micro 3  GPIO_ACTIVE_HIGH>
+            ;
+    };
+
+    /* ═══════════════════════════════════════════════════════════════════
+     *  ANALOG JOYSTICK — two-axis ADC-based pointing device
+     *  ADC channels configured in boards/nice_nano_v2.overlay
+     * ═══════════════════════════════════════════════════════════════════ */
+
+    analog_joystick: analog_joystick {
+        compatible = "zephyr,analog-axis";
+        poll-period-ms = <15>;
+
+        /* X-axis: VRx → pro_micro 20 (P0.28, AIN4) */
+        axis-x {
+            io-channels = <&adc 4>;
+            in-deadzone = <150>;
+            in-min = <50>;
+            in-max = <4000>;
+            out-min = <-127>;
+            out-max = <127>;
+            zephyr,axis = <INPUT_ABS_X>;
+        };
+
+        /* Y-axis: VRy → pro_micro 21 (P0.30, AIN6)
+         * Add invert-input; if Y movement is reversed. */
+        axis-y {
+            io-channels = <&adc 6>;
+            in-deadzone = <150>;
+            in-min = <50>;
+            in-max = <4000>;
+            out-min = <-127>;
+            out-max = <127>;
+            zephyr,axis = <INPUT_ABS_Y>;
+            invert-input;
+        };
+    };
+
+    /* Joystick press-down button → pro_micro 17 */
+    joystick_button: joystick_button {
+        compatible = "gpio-keys";
+        wakeup-source;
+        joystick_btn: joystick_btn {
+            gpios = <&pro_micro 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            zephyr,code = <INPUT_BTN_0>;
+        };
+    };
+
+    /* Wire analog joystick into ZMK pointing subsystem */
+    joystick_listener: joystick_listener {
+        compatible = "zmk,input-listener";
+        device = <&analog_joystick>;
+    };
+};

@@ -1,0 +1,9 @@
+# Copyright (c) 2024 Field Test contributors
+# SPDX-License-Identifier: MIT
+
+if SHIELD_FIELD_TEST
+
+config ZMK_KEYBOARD_NAME
+    default "Field Test"
+
+endif # SHIELD_FIELD_TEST
