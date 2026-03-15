@@ -5,7 +5,8 @@
  * Field Test — 4-key keyboard keymap
  *
  * Key positions:
- *   0  1  2  3
+ *   0  1
+ *   2  3
  *
  * Layers:
  *   0 = BASE
@@ -23,7 +24,8 @@
         base_layer {
             display-name = "Base";
             bindings = <
-                &kp A   &kp B   &mkp LCLK   &mkp RCLK
+                &kp A     &kp B
+                &mkp LCLK &mkp RCLK
             >;
         };
     };
