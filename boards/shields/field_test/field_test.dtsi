@@ -85,7 +85,7 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
             in-deadzone = <150>;
             in-min = <50>;
             in-max = <4000>;
-            out-min = <-127>;
+            out-min = <(-127)>;
             out-max = <127>;
             zephyr,axis = <INPUT_ABS_X>;
         };
@@ -97,7 +97,7 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
             in-deadzone = <150>;
             in-min = <50>;
             in-max = <4000>;
-            out-min = <-127>;
+            out-min = <(-127)>;
             out-max = <127>;
             zephyr,axis = <INPUT_ABS_Y>;
             invert-input;
