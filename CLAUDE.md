@@ -3,6 +3,23 @@
 This file provides guidance to Claude Code when working with this ZMK keyboard
 configuration repository.
 
+## CI Verification — Required After Every Commit
+
+After **every** `git push`, you must:
+
+1. Wait for the GitHub Actions runs to appear:
+   ```
+   gh run list --branch <branch> --limit 3
+   ```
+2. Watch **both** workflows to completion:
+   - `.github/workflows/build.yml` — ZMK firmware build (primary)
+   - `.github/workflows/keymap-drawer.yaml` — SVG keymap render
+   ```
+   gh run watch <run-id>
+   ```
+3. If either workflow fails, read the logs, fix the root cause, push a new
+   commit, and repeat from step 1. Do **not** leave a failing CI unresolved.
+
 ## Project Overview
 
 ZMK firmware configuration for multiple keyboards, managed via GitHub Actions

@@ -18,7 +18,10 @@ jobs:
       contents: write # allow workflow to commit to the repo
     with:
       amend_commit: true
-      keymap_patterns: "config/*.keymap" # path to the keymaps to parse
+      # Custom shields (field_test, mini_v36_joystick) use zmk,physical-layout
+      # nodes that keymap-drawer cannot resolve without ZMKEXTRA_MODULES; only
+      # list standard keyboards whose layouts are built into keymap-drawer.
+      keymap_patterns: "config/corne.keymap config/sofle.keymap config/lily58.keymap config/splitkb_aurora_sofle.keymap"
       config_path: "config/config_keymap-drawer.yaml" # config file, ignored if not exists
       output_folder: "keymap-drawer" # path to save produced SVG and keymap YAML files
       parse_args: "" # map of extra args to pass to `keymap parse`, e.g. "corne:'-l Def Lwr Rse' cradio:''"

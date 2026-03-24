@@ -1,0 +1,9 @@
+file_format: "1"
+id: field_test
+name: Field Test
+type: shield
+url: https://github.com/pandazxx/yet-another-zmk-config
+requires: [pro_micro]
+features:
+  - keys
+  - pointing

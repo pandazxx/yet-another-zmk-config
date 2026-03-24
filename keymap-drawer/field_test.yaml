@@ -1,0 +1,3 @@
+layout: {zmk_keyboard: field_test}
+layers:
+  Base: [A, B, '&mkp LCLK', '&mkp RCLK']
