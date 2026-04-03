@@ -276,6 +276,16 @@ include:
     snippet: studio-rpc-usb-uart
   ### SPLITKB AURORA SOFLE END ###
 
+  ### 4KEYS JOYSTICK START ###
+  # Experimental 4-key keyboard with analog joystick as mouse
+  # Uses zmk-analog-input-driver: https://github.com/badjeff/zmk-analog-input-driver
+  - board: nice_nano_v2
+    shield: 4keys
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"4Keys_Joy\" -DKEYMAP_FILE=../../config/4keys.keymap -DEXTRA_CONF_FILE=../../config/4keys.conf
+    artifact-name: nice_4keys_joystick
+    snippet: studio-rpc-usb-uart
+  ### 4KEYS JOYSTICK END ###
+
   ### SETTINGS_RESET START ###
   - board: nice_nano_v2
     shield: settings_reset

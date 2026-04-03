@@ -1,0 +1,9 @@
+# Copyright (c) 2024 MC Technology
+# SPDX-License-Identifier: MIT
+
+if SHIELD_4KEYS
+
+config ZMK_KEYBOARD_NAME
+    default "4Keys"
+
+endif

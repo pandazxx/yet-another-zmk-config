@@ -1,0 +1,5 @@
+# Copyright (c) 2024 MC Technology
+# SPDX-License-Identifier: MIT
+
+config SHIELD_4KEYS
+    def_bool $(shields_list_contains,4keys)
