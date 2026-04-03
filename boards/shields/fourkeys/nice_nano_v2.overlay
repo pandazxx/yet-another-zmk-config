@@ -7,8 +7,8 @@
  * to translate ADC joystick axes into relative mouse movement events.
  *
  * Joystick ADC wiring (adjust channel numbers and midpoint/scale to your hardware):
- *   X axis → AIN1 (P0.03) = channel 1
- *   Y axis → AIN2 (P0.28) = channel 2
+ *   X axis → AIN3 (P0.29) = channel 3
+ *   Y axis → AIN5 (P0.31) = channel 5
  *
  * Calibration tips:
  *   - Set mv-mid to the millivolt reading when the stick is centred (typically ~1650 mV)
@@ -34,7 +34,7 @@
         sampling-hz = <100>;
 
         x-ch {
-            io-channels = <&adc 1>;     /* AIN1 = P0.03 */
+            io-channels = <&adc 3>;     /* AIN3 = P0.29 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
             mv-deadzone = <100>;
@@ -45,7 +45,7 @@
         };
 
         y-ch {
-            io-channels = <&adc 2>;     /* AIN2 = P0.28 */
+            io-channels = <&adc 5>;     /* AIN5 = P0.31 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
             mv-deadzone = <100>;
