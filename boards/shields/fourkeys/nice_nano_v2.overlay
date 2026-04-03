@@ -37,7 +37,7 @@
             io-channels = <&adc 3>;     /* AIN3 = P0.29 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
-            mv-deadzone = <100>;
+            mv-deadzone = <0>;
             scale-multiplier = <1>;
             scale-divisor = <60>;
             evt-type = <INPUT_EV_REL>;
@@ -48,7 +48,7 @@
             io-channels = <&adc 5>;     /* AIN5 = P0.31 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
-            mv-deadzone = <100>;
+            mv-deadzone = <0>;
             scale-multiplier = <1>;
             scale-divisor = <60>;
             invert;
