@@ -59,7 +59,7 @@ include:
   # Uses zmk-analog-input-driver: https://github.com/badjeff/zmk-analog-input-driver
   - board: nice_nano_v2
     shield: fourkeys
-    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"4Keys_Joy\" -DKEYMAP_FILE=../../config/fourkeys.keymap -DEXTRA_CONF_FILE=../../config/fourkeys.conf
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"4Keys_Joy\"
     artifact-name: nice_4keys_joystick
     snippet: studio-rpc-usb-uart
   ### FOURKEYS JOYSTICK END ###
