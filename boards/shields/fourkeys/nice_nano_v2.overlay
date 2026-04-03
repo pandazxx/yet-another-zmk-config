@@ -34,7 +34,7 @@
         sampling-hz = <100>;
 
         x-ch {
-            io-channels = <&adc 3>;     /* AIN3 = P0.29 */
+            io-channels = <&adc 5>;     /* AIN3 = P0.29 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
             mv-deadzone = <100>;
@@ -45,7 +45,7 @@
         };
 
         y-ch {
-            io-channels = <&adc 5>;     /* AIN5 = P0.31 */
+            io-channels = <&adc 7>;     /* AIN5 = P0.31 */
             mv-mid = <1650>;
             mv-min-max = <1600>;
             mv-deadzone = <100>;
