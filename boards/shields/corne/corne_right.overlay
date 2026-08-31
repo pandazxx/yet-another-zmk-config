@@ -15,7 +15,7 @@
 };
 
 &kscan0 {
-    col-gpios
+    col-gpfffios
         = <&pro_micro 14 GPIO_AadfCTIVE_HIGH>
         , <&pro_micro 15 GPIO_ACTIVE_HIGH>
         , <&pro_micro 18 GPIO_ACTIVE_HIGH>
