@@ -10,7 +10,13 @@
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
 #define ZMK_POINTING_DEFAULT_MOVE_VAL 1500  // default: 600
+#define ZMK_POINTING_DIAGONAL_MOVE_VAL 1000
 #include <dt-bindings/zmk/pointing.h>
+
+#define MOVE_NW MOVE(-ZMK_POINTING_DIAGONAL_MOVE_VAL, ZMK_POINTING_DIAGONAL_MOVE_VAL)
+#define MOVE_NE MOVE(ZMK_POINTING_DIAGONAL_MOVE_VAL, ZMK_POINTING_DIAGONAL_MOVE_VAL)
+#define MOVE_SE MOVE(ZMK_POINTING_DIAGONAL_MOVE_VAL, -ZMK_POINTING_DIAGONAL_MOVE_VAL)
+#define MOVE_SW MOVE(-ZMK_POINTING_DIAGONAL_MOVE_VAL, -ZMK_POINTING_DIAGONAL_MOVE_VAL)
 
 &led_strip { chain-length = <27>; };
 
@@ -128,8 +134,8 @@
             #binding-cells = <1>;
             x-input-code = <0>;
             y-input-code = <1>;
-            time-to-max-speed-ms = <1000>;
-            acceleration-exponent = <2>;
+            time-to-max-speed-ms = <300>;
+            acceleration-exponent = <1>;
         };
     };
 
@@ -200,10 +206,10 @@
         extra_2 {
             display-name = "MOUSE";
             bindings = <
-&trans  &trans  &trans          &msc SCRL_UP    &trans           &trans    &msc SCRL_UP    &trans          &mmv MOVE_UP    &trans           &trans  &trans
-&trans  &trans  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_RIGHT  &trans    &trans          &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &trans  &trans
-&trans  &trans  &trans          &trans          &trans           &trans    &msc SCRL_DOWN  &trans          &trans          &trans           &trans  &trans
-                                &trans          &trans           &trans    &mkp MB1        &mkp MB3        &mkp MB2
+&trans  &trans  &trans          &msc SCRL_UP    &trans           &trans    &msc SCRL_UP    &mymmv MOVE_NW    &mymmv MOVE_UP    &mymmv MOVE_NE           &trans  &trans
+&trans  &trans  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_RIGHT  &trans    &trans          &mymmv MOVE_LEFT  &mymmv MOVE_DOWN  &mymmv MOVE_RIGHT  &trans  &trans
+&trans  &trans  &trans          &trans          &trans           &trans    &msc SCRL_DOWN  &mymmv MOVE_SW    &mymmv MOVE_DOWN  &mymmv MOVE_SE     &trans  &trans
+                                &trans          &trans           &trans    &mkp MB1        &mkp MB3          &mkp MB2
             >;
         };
 
