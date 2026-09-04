@@ -180,9 +180,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - '&msc SCRL_UP'
-  - {t: ▽, type: trans}
+  - '&mmv MOVE(-1000, 1000)'
   - '&mmv MOVE_UP'
-  - {t: ▽, type: trans}
+  - '&mmv MOVE(1000, 1000)'
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -204,9 +204,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - '&msc SCRL_DOWN'
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - '&mmv MOVE(-1000, -1000)'
+  - '&mmv MOVE_DOWN'
+  - '&mmv MOVE(1000, -1000)'
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {type: held}

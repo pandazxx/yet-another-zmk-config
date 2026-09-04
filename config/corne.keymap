@@ -206,9 +206,9 @@
         extra_2 {
             display-name = "MOUSE";
             bindings = <
-&trans  &trans  &trans          &msc SCRL_UP    &trans           &trans    &msc SCRL_UP    &mymmv MOVE_NW    &mymmv MOVE_UP    &mymmv MOVE_NE           &trans  &trans
-&trans  &trans  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_RIGHT  &trans    &trans          &mymmv MOVE_LEFT  &mymmv MOVE_DOWN  &mymmv MOVE_RIGHT  &trans  &trans
-&trans  &trans  &trans          &trans          &trans           &trans    &msc SCRL_DOWN  &mymmv MOVE_SW    &mymmv MOVE_DOWN  &mymmv MOVE_SE     &trans  &trans
+&trans  &trans  &trans          &msc SCRL_UP    &trans           &trans    &msc SCRL_UP    &mmv MOVE_NW    &mmv MOVE_UP    &mmv MOVE_NE           &trans  &trans
+&trans  &trans  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_RIGHT  &trans    &trans          &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &trans  &trans
+&trans  &trans  &trans          &trans          &trans           &trans    &msc SCRL_DOWN  &mmv MOVE_SW    &mmv MOVE_DOWN  &mmv MOVE_SE     &trans  &trans
                                 &trans          &trans           &trans    &mkp MB1        &mkp MB3          &mkp MB2
             >;
         };
