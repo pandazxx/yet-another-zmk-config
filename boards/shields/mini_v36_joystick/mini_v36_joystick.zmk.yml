@@ -1,0 +1,12 @@
+file_format: "1"
+id: mini_v36_joystick
+name: Mini V36 Joystick
+type: shield
+url: https://github.com/pandazxx/yet-another-zmk-config
+requires: [pro_micro]
+exposes: [i2c_oled]
+features:
+  - keys
+  - pointing
+  - display
+  - studio

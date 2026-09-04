@@ -1,0 +1,30 @@
+# Copyright (c) 2024 Mini V36 Joystick contributors
+# SPDX-License-Identifier: MIT
+
+config SHIELD_MINI_V36_JOYSTICK
+    def_bool $(shields_list_contains,mini_v36_joystick)
+
+# ── Joystick type selection ────────────────────────────────────────────────
+if SHIELD_MINI_V36_JOYSTICK
+
+choice MINI_V36_JOYSTICK_TYPE
+    prompt "Pointing device type"
+    default MINI_V36_JOYSTICK_TYPE_5WAY
+
+config MINI_V36_JOYSTICK_TYPE_ANALOG
+    bool "Analog joystick module (ADC X/Y axes + button)"
+    help
+      Two-axis analog joystick connected via ADC (VRx → AIN4/P0.28,
+      VRy → AIN6/P0.30) and one GPIO button (pro_micro 17).
+      Compatible with OLED display.
+
+config MINI_V36_JOYSTICK_TYPE_5WAY
+    bool "5-way tactile navigation switch (GPIO)"
+    help
+      Five-direction switch wired to pro_micro pins 17-21.
+      NOTE: Incompatible with OLED display — pins 18/19 are shared
+      with I2C SDA/SCL. Set CONFIG_ZMK_DISPLAY=n when using this option.
+
+endchoice
+
+endif

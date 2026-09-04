@@ -1,0 +1,58 @@
+/*
+ * Copyright (c) 2024 Mini V36 Joystick contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * nice!nano v2 (nRF52840) board-specific overrides.
+ */
+
+/* ── ADC channels for analog joystick ──────────────────────────────────── */
+#if defined(CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG)
+
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    /* AIN4 / P0.28 — X-axis (pro_micro pin 20) */
+    channel@4 {
+        reg = <4>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN4>;
+        zephyr,resolution = <12>;
+    };
+
+    /* AIN6 / P0.30 — Y-axis (pro_micro pin 21) */
+    channel@6 {
+        reg = <6>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN6>;
+        zephyr,resolution = <12>;
+    };
+};
+
+#endif /* CONFIG_MINI_V36_JOYSTICK_TYPE_ANALOG */
+
+/* ── Optional RGB underglow via SPI3 ───────────────────────────────────── */
+/* Uncomment to enable WS2812 LED strip:
+&spi3 {
+    led_strip: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <4000000>;
+        chain-length = <36>;
+        spi-one-frame = <0x70>;
+        spi-zero-frame = <0x40>;
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+    };
+};
+
+/ {
+    chosen {
+        zmk,underglow = &led_strip;
+    };
+};
+*/

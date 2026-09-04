@@ -1,0 +1,6 @@
+/*
+ * Copyright (c) 2024 Mini V36 Joystick contributors
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "mini_v36_joystick.dtsi"
