@@ -56,7 +56,7 @@ include:
 
   - board: nice_nano_v2
     shield: my_36
-    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36 keyboard\"
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36_keyboard\"
     artifact-name: xx_36
     snippet: studio-rpc-usb-uart
 
