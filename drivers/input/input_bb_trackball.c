@@ -16,6 +16,13 @@
 
 LOG_MODULE_REGISTER(bb_trackball, CONFIG_INPUT_LOG_LEVEL);
 
+/*
+ * The probe is deliberately late and repeating: at init it would land long
+ * before the USB console has enumerated, and its output would be dropped.
+ * Repeating also makes it usable as a wiggle test on a suspect joint.
+ */
+#define BB_TRACKBALL_PROBE_PERIOD_S 10
+
 enum bb_trackball_dir {
     BB_DIR_UP,
     BB_DIR_DOWN,
@@ -45,6 +52,7 @@ struct bb_trackball_data {
     struct bb_trackball_dir_data dirs[BB_DIR_COUNT];
     struct gpio_callback btn_cb;
     struct k_work_delayable report_work;
+    struct k_work_delayable probe_work;
     struct k_work btn_work;
 };
 
@@ -163,6 +171,27 @@ static void bb_trackball_probe_pin(const struct gpio_dt_spec *spec, const char *
             (with_pull_up == with_pull_down) ? "driven by the module" : "floating (nothing driving it)");
 }
 
+/*
+ * Interrupts are already armed by the time this runs, so drop them for the
+ * duration of the probe and put them straight back.
+ */
+static void bb_trackball_probe_work(struct k_work *work) {
+    struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+    struct bb_trackball_data *data = CONTAINER_OF(dwork, struct bb_trackball_data, probe_work);
+    const struct bb_trackball_config *config = data->dev->config;
+    static const char *const dir_names[BB_DIR_COUNT] = {"up", "down", "left", "right"};
+
+    for (uint8_t i = 0; i < BB_DIR_COUNT; i++) {
+        const struct gpio_dt_spec *spec = &config->dirs[i];
+
+        gpio_pin_interrupt_configure_dt(spec, GPIO_INT_DISABLE);
+        bb_trackball_probe_pin(spec, dir_names[i]);
+        gpio_pin_interrupt_configure_dt(spec, GPIO_INT_EDGE_BOTH);
+    }
+
+    k_work_schedule(&data->probe_work, K_SECONDS(BB_TRACKBALL_PROBE_PERIOD_S));
+}
+
 static int bb_trackball_init_pin(const struct device *dev, const struct gpio_dt_spec *spec,
                                  struct gpio_callback *cb, gpio_callback_handler_t handler) {
     int ret;
@@ -202,15 +231,13 @@ static int bb_trackball_init(const struct device *dev) {
 
     data->dev = dev;
     k_work_init_delayable(&data->report_work, bb_trackball_report_work);
+    k_work_init_delayable(&data->probe_work, bb_trackball_probe_work);
     k_work_init(&data->btn_work, bb_trackball_btn_work);
-
-    static const char *const dir_names[BB_DIR_COUNT] = {"up", "down", "left", "right"};
 
     for (uint8_t i = 0; i < BB_DIR_COUNT; i++) {
         data->dirs[i].dev = dev;
         data->dirs[i].dir = i;
 
-        bb_trackball_probe_pin(&config->dirs[i], dir_names[i]);
 
         ret = bb_trackball_init_pin(dev, &config->dirs[i], &data->dirs[i].cb,
                                     bb_trackball_dir_isr);
@@ -226,12 +253,7 @@ static int bb_trackball_init(const struct device *dev) {
         }
     }
 
-    /* All four pins are live at this point; their resting levels tell you
-     * whether a silent pin is being driven by the module or is floating. */
-    LOG_INF("trackball ready, resting levels up=%d down=%d left=%d right=%d",
-            gpio_pin_get_dt(&config->dirs[BB_DIR_UP]), gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
-            gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
-            gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
+    k_work_schedule(&data->probe_work, K_SECONDS(BB_TRACKBALL_PROBE_PERIOD_S));
 
     return 0;
 }
