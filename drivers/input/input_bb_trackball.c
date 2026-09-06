@@ -92,7 +92,11 @@ static void bb_trackball_report_work(struct k_work *work) {
     }
 
     if (up != 0 || down != 0 || left != 0 || right != 0) {
-        LOG_DBG("pulses up=%d down=%d left=%d right=%d -> x=%d y=%d", up, down, left, right, x, y);
+        LOG_DBG("pulses up=%d down=%d left=%d right=%d -> x=%d y=%d (levels %d%d%d%d)", up, down,
+                left, right, x, y, gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
     }
 
     if (x == 0 && y == 0) {
@@ -189,6 +193,13 @@ static int bb_trackball_init(const struct device *dev) {
             return ret;
         }
     }
+
+    /* All four pins are live at this point; their resting levels tell you
+     * whether a silent pin is being driven by the module or is floating. */
+    LOG_INF("trackball ready, resting levels up=%d down=%d left=%d right=%d",
+            gpio_pin_get_dt(&config->dirs[BB_DIR_UP]), gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
 
     return 0;
 }
