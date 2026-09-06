@@ -91,11 +91,13 @@ static void bb_trackball_report_work(struct k_work *work) {
         y = -y;
     }
 
+    if (up != 0 || down != 0 || left != 0 || right != 0) {
+        LOG_DBG("pulses up=%d down=%d left=%d right=%d -> x=%d y=%d", up, down, left, right, x, y);
+    }
+
     if (x == 0 && y == 0) {
         return;
     }
-
-    LOG_DBG("trackball delta x: %d y: %d", x, y);
 
     if (x != 0) {
         input_report_rel(dev, INPUT_REL_X, x, y == 0, K_FOREVER);
