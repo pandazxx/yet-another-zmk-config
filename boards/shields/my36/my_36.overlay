@@ -36,7 +36,7 @@
             = <&pro_micro 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , <&pro_micro 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , <&pro_micro 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            
+            ;
     };
 
     physical_layout0: physical_layout_0 { // First physical layout, use different naming for other layouts
