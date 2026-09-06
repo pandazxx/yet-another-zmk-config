@@ -35,8 +35,11 @@ reported as `INPUT_BTN_0`, which the input listener turns into a left click.
 ## Tuning
 
 - **Too slow / too fast.** The ball only produces ~9 transitions per full
-  revolution per axis, which is why the listener multiplies by 16:
-  `input-processors = <&zip_xy_scaler 16 1>;`. Change the first parameter.
+  revolution per axis, which is why the listener multiplies by 64:
+  `input-processors = <&zip_xy_scaler 64 1>;`. Change the first parameter.
+  It doubles as the cursor's step size in pixels, so there is a trade-off:
+  higher is faster but moves the cursor in coarser jumps. 32–128 is the
+  usable range with this sensor.
 - **An axis moves the wrong way.** Add `invert-x;` or `invert-y;` to the
   `trackball` node.
 - **X and Y are swapped** (module mounted rotated): add `swap-xy;`.

@@ -75,11 +75,13 @@
     };
 
     // The ball only emits ~9 pulses per revolution and per axis, so the raw
-    // deltas have to be multiplied up heavily. Raise/lower the first
-    // parameter of zip_xy_scaler to taste.
+    // deltas have to be multiplied up heavily: a thumb swipe is well under a
+    // full revolution, i.e. only a handful of pulses. The first parameter of
+    // zip_xy_scaler is the knob; it is also the cursor's step size in pixels,
+    // so raising it buys speed at the cost of a coarser, steppier cursor.
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
-        input-processors = <&zip_xy_scaler 16 1>;
+        input-processors = <&zip_xy_scaler 64 1>;
     };
 };
