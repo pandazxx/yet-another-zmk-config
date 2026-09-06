@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: MIT
+
+description: |
+  BlackBerry trackball breakout board.
+
+  Four hall-effect sensors expose one pin per direction (UP / DWN / LFT / RHT).
+  A pin toggles while the ball is rolled in that direction (roughly 9
+  transitions per full revolution of the ball, so a large scaler multiplier
+  on the input listener is normally required).
+
+  The optional ball-click switch (BTN, active low) is reported as INPUT_BTN_0.
+
+compatible: "zmk,input-bb-trackball"
+
+include: base.yaml
+
+properties:
+  up-gpios:
+    type: phandle-array
+    required: true
+    description: UP pin of the breakout.
+
+  down-gpios:
+    type: phandle-array
+    required: true
+    description: DWN pin of the breakout.
+
+  left-gpios:
+    type: phandle-array
+    required: true
+    description: LFT pin of the breakout.
+
+  right-gpios:
+    type: phandle-array
+    required: true
+    description: RHT pin of the breakout.
+
+  btn-gpios:
+    type: phandle-array
+    description: |
+      Optional BTN pin (ball click). Reported as INPUT_BTN_0, i.e. a left
+      mouse button, by the input listener. Omit it if you would rather wire
+      the switch into your key matrix and bind &mkp in the keymap.
+
+  report-interval-ms:
+    type: int
+    default: 10
+    description: |
+      How long pulses are accumulated before a relative report is emitted.
+      Lower values feel more responsive, higher values batch more movement
+      into a single HID report.
+
+  invert-x:
+    type: boolean
+    description: Negate the X axis (swap the LFT/RHT sense).
+
+  invert-y:
+    type: boolean
+    description: Negate the Y axis (swap the UP/DWN sense).
+
+  swap-xy:
+    type: boolean
+    description: Exchange the X and Y axes, e.g. for a rotated module.

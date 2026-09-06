@@ -1,0 +1,13 @@
+if INPUT
+
+config INPUT_BB_TRACKBALL
+    bool "BlackBerry trackball breakout (4 direction pins)"
+    default y
+    depends on DT_HAS_ZMK_INPUT_BB_TRACKBALL_ENABLED
+    help
+      Input driver for the BlackBerry trackball breakout boards that expose
+      four hall-effect direction pins (UP / DWN / LFT / RHT), plus an
+      optional ball-click button. Each pin pulses while the ball rolls in
+      that direction; pulses are counted and reported as relative X/Y.
+
+endif # INPUT

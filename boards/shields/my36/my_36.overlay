@@ -1,4 +1,5 @@
 #include <dt-bindings/zmk/matrix_transform.h> // Put this with the other includes at the top of your overlay
+#include <input/processors.dtsi>              // zip_xy_scaler & friends
 
 / {
     chosen {
@@ -44,5 +45,41 @@
         display-name = "Default Layout";
         kscan = <&kscan0>; // Label of the kscan node, optional if all layouts use the same
         transform = <&default_transform>; // Label of the matrix transform for this layout
+    };
+
+    // ------------------------------------------------------------------
+    // BlackBerry trackball breakout
+    //
+    // Module -> nice!nano (right hand column, VCC downwards):
+    //   VCC -> VCC (3.3V)      GND -> GND
+    //   UP  -> D21             DWN -> D20
+    //   LFT -> D19             RHT -> D18
+    //   BTN -> D15
+    //   BLU / RED / GRN / WHT are the trackball's LEDs, leave unconnected.
+    //
+    // The direction pins are pushed high by the breakout, so no internal
+    // bias is requested here. If the module leaves them floating (phantom
+    // cursor movement while the ball is still), add GPIO_PULL_DOWN.
+    // ------------------------------------------------------------------
+    trackball: trackball {
+        compatible = "zmk,input-bb-trackball";
+        status = "okay";
+
+        up-gpios    = <&pro_micro 21 GPIO_ACTIVE_HIGH>;
+        down-gpios  = <&pro_micro 20 GPIO_ACTIVE_HIGH>;
+        left-gpios  = <&pro_micro 19 GPIO_ACTIVE_HIGH>;
+        right-gpios = <&pro_micro 18 GPIO_ACTIVE_HIGH>;
+        btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+
+        report-interval-ms = <10>;
+    };
+
+    // The ball only emits ~9 pulses per revolution and per axis, so the raw
+    // deltas have to be multiplied up heavily. Raise/lower the first
+    // parameter of zip_xy_scaler to taste.
+    trackball_listener: trackball_listener {
+        compatible = "zmk,input-listener";
+        device = <&trackball>;
+        input-processors = <&zip_xy_scaler 16 1>;
     };
 };
