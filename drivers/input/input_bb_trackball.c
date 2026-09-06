@@ -135,6 +135,34 @@ static void bb_trackball_btn_work(struct k_work *work) {
     input_report_key(dev, INPUT_BTN_0, pressed, true, K_FOREVER);
 }
 
+/*
+ * Tell a driven line apart from a floating one: bias the pin high, then low,
+ * and see whether anything on the other end overrules us. A pin that follows
+ * the bias is high impedance - nothing is driving it - while a pin that reads
+ * the same under both biases is being held by the module.
+ */
+static void bb_trackball_probe_pin(const struct gpio_dt_spec *spec, const char *name) {
+    int with_pull_up = -1;
+    int with_pull_down = -1;
+
+    if (gpio_pin_configure(spec->port, spec->pin, GPIO_INPUT | GPIO_PULL_UP) == 0) {
+        k_busy_wait(200);
+        with_pull_up = gpio_pin_get_raw(spec->port, spec->pin);
+    }
+
+    if (gpio_pin_configure(spec->port, spec->pin, GPIO_INPUT | GPIO_PULL_DOWN) == 0) {
+        k_busy_wait(200);
+        with_pull_down = gpio_pin_get_raw(spec->port, spec->pin);
+    }
+
+    /* Back to whatever the devicetree asked for. */
+    gpio_pin_configure_dt(spec, GPIO_INPUT);
+
+    LOG_INF("%s pin: pull-up reads %d, pull-down reads %d -> %s", name, with_pull_up,
+            with_pull_down,
+            (with_pull_up == with_pull_down) ? "driven by the module" : "floating (nothing driving it)");
+}
+
 static int bb_trackball_init_pin(const struct device *dev, const struct gpio_dt_spec *spec,
                                  struct gpio_callback *cb, gpio_callback_handler_t handler) {
     int ret;
@@ -176,9 +204,13 @@ static int bb_trackball_init(const struct device *dev) {
     k_work_init_delayable(&data->report_work, bb_trackball_report_work);
     k_work_init(&data->btn_work, bb_trackball_btn_work);
 
+    static const char *const dir_names[BB_DIR_COUNT] = {"up", "down", "left", "right"};
+
     for (uint8_t i = 0; i < BB_DIR_COUNT; i++) {
         data->dirs[i].dev = dev;
         data->dirs[i].dir = i;
+
+        bb_trackball_probe_pin(&config->dirs[i], dir_names[i]);
 
         ret = bb_trackball_init_pin(dev, &config->dirs[i], &data->dirs[i].cb,
                                     bb_trackball_dir_isr);
