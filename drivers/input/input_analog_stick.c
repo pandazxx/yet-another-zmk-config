@@ -27,6 +27,15 @@ LOG_MODULE_REGISTER(analog_stick, CONFIG_INPUT_LOG_LEVEL);
 /* Samples averaged to find the resting position when centre-mv is not given. */
 #define AS_CALIBRATION_SAMPLES 16
 
+/*
+ * SAADC channel slots are global and claimed by whoever calls
+ * adc_channel_setup() last. ZMK's battery sensor (zmk,battery-nrf-vddh)
+ * takes channel 0 for VDDH, so start above it - sharing a slot means one of
+ * the two silently reads the other's input.
+ */
+#define AS_ADC_CHANNEL_BASE 1
+#define AS_ADC_CHANNEL(axis) (AS_ADC_CHANNEL_BASE + (axis))
+
 enum as_axis { AS_AXIS_X, AS_AXIS_Y, AS_AXIS_COUNT };
 
 struct as_config {
@@ -101,7 +110,7 @@ static void as_sample_work(struct k_work *work) {
      * enough to creep through the deadzone.
      */
     for (uint8_t i = 0; i < AS_AXIS_COUNT; i++) {
-        data->sequence.channels = BIT(i);
+        data->sequence.channels = BIT(AS_ADC_CHANNEL(i));
         data->sequence.buffer = &data->raw[i];
         data->sequence.buffer_size = sizeof(data->raw[i]);
 
@@ -208,7 +217,7 @@ static int as_init(const struct device *dev) {
             .gain = ADC_GAIN_1_6,
             .reference = ADC_REF_INTERNAL,
             .acquisition_time = ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 40),
-            .channel_id = i,
+            .channel_id = AS_ADC_CHANNEL(i),
             .input_positive = SAADC_CH_PSELP_PSELP_AnalogInput0 + config->inputs[i],
         };
 
