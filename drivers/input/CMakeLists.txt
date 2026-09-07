@@ -1,3 +1,4 @@
 zephyr_library_named(zmk_config_input)
 
 zephyr_library_sources_ifdef(CONFIG_INPUT_BB_TRACKBALL input_bb_trackball.c)
+zephyr_library_sources_ifdef(CONFIG_INPUT_ANALOG_STICK input_analog_stick.c)

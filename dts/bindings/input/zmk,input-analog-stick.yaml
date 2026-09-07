@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: MIT
+
+description: |
+  Two-potentiometer analog joystick (KY-023 and friends) used as a pointing
+  device.
+
+  Deflection is read as a velocity and reported as relative motion, because
+  ZMK's input listener ignores INPUT_EV_ABS events. Push the stick further
+  and the cursor moves faster; the resting position produces nothing.
+
+compatible: "zmk,input-analog-stick"
+
+include: base.yaml
+
+properties:
+  io-channels:
+    type: phandle-array
+    required: true
+    description: |
+      Exactly two ADC inputs, X first then Y. On the nRF52840 the cell is the
+      AIN number, so <&adc 5> is AIN5 = P0.29.
+
+  btn-gpios:
+    type: phandle-array
+    description: |
+      Optional stick push switch (the SW pin), reported as INPUT_BTN_0 and so
+      turned into a left click by the input listener. Usually active low and
+      wants a pull-up.
+
+  sampling-hz:
+    type: int
+    default: 100
+    description: |
+      How often both axes are sampled. This is a continuously running ADC, so
+      it costs battery; lower it if idle drain matters more than smoothness.
+
+  deadzone-mv:
+    type: int
+    default: 80
+    description: |
+      Millivolts of slack around the centre that produce no movement. Raise it
+      if the cursor creeps when the stick is released; the driver measures
+      speed from the edge of the deadzone, so widening it does not add a jump.
+
+  centre-mv:
+    type: int
+    default: 0
+    description: |
+      Resting voltage of both axes. Leave at 0 to measure it at startup
+      instead, which is usually better than a hardcoded number - just do not
+      hold the stick while the board boots.
+
+  scale-multiplier:
+    type: int
+    default: 1
+    description: Numerator of millivolts-to-pixels-per-tick.
+
+  scale-divisor:
+    type: int
+    default: 40
+    description: |
+      Denominator of millivolts-to-pixels-per-tick. Lower is faster. Division
+      leftovers are carried between ticks, so slow creeping movement survives.
+
+  invert-x:
+    type: boolean
+    description: Negate the X axis.
+
+  invert-y:
+    type: boolean
+    description: Negate the Y axis.
+
+  swap-xy:
+    type: boolean
+    description: Exchange X and Y, e.g. for a stick mounted rotated.

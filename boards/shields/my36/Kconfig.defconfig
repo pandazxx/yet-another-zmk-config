@@ -5,3 +5,11 @@ config ZMK_KEYBOARD_NAME
     default "My 36 Keyboard"
 
 endif
+
+if SHIELD_MY_36_JS
+
+# Name must be less than 16 characters long!
+config ZMK_KEYBOARD_NAME
+    default "My 36 Joystick"
+
+endif

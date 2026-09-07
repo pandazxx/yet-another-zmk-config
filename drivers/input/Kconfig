@@ -10,4 +10,15 @@ config INPUT_BB_TRACKBALL
       optional ball-click button. Each pin pulses while the ball rolls in
       that direction; pulses are counted and reported as relative X/Y.
 
+config INPUT_ANALOG_STICK
+    bool "Analog joystick as a pointing device"
+    default y
+    depends on DT_HAS_ZMK_INPUT_ANALOG_STICK_ENABLED
+    select ADC
+    help
+      Input driver for a two-potentiometer analog joystick. Both axes are
+      sampled on a timer and the deflection past a deadzone is reported as
+      relative motion, so the stick behaves as a velocity control rather
+      than an absolute axis.
+
 endif # INPUT

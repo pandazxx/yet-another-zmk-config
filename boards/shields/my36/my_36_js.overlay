@@ -1,0 +1,48 @@
+#include "my_36.dtsi"
+
+&adc {
+    status = "okay";
+};
+
+/ {
+    // ------------------------------------------------------------------
+    // Analog joystick (KY-023 style: two potentiometers plus a push switch)
+    //
+    // Module -> nice!nano:
+    //   GND -> GND             +5V -> VCC (3.3V is fine, and is what the
+    //                                 ADC range below assumes)
+    //   VRx -> D20 (AIN5)      VRy -> D21 (AIN7)
+    //   SW  -> D18
+    //
+    // Only P0.02 (D19), P0.29 (D20) and P0.31 (D21) are both ADC-capable
+    // and broken out on a nice!nano, so the axes have to live on two of
+    // those three. D19 is left free.
+    //
+    // These are the same pads the trackball build uses - the two pointing
+    // devices cannot be wired at once without moving the matrix.
+    // ------------------------------------------------------------------
+    stick: analog_stick {
+        compatible = "zmk,input-analog-stick";
+        status = "okay";
+
+        io-channels = <&adc 5>, <&adc 7>;   // AIN5 = P0.29, AIN7 = P0.31
+        btn-gpios = <&pro_micro 18 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+
+        sampling-hz = <100>;
+
+        // Left at 0 so the resting voltage is measured during startup;
+        // set it explicitly if you would rather pin the centre down.
+        centre-mv = <0>;
+
+        // Raise deadzone-mv if the cursor creeps when you let go, and
+        // lower scale-divisor to make the cursor faster.
+        deadzone-mv = <80>;
+        scale-multiplier = <1>;
+        scale-divisor = <40>;
+    };
+
+    stick_listener: stick_listener {
+        compatible = "zmk,input-listener";
+        device = <&stick>;
+    };
+};

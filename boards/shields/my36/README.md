@@ -52,3 +52,61 @@ reported as `INPUT_BTN_0`, which the input listener turns into a left click.
 
 Right/middle click are not wired to the ball; bind them in the keymap with
 `&mkp RCLK` / `&mkp MCLK` (needs `#include <dt-bindings/zmk/pointing.h>`).
+
+---
+
+# my_36_js — the analog joystick variant
+
+Same 3x3 matrix (shared via `my_36.dtsi`), but with a two-potentiometer
+joystick instead of the trackball, and mouse buttons on the bottom keymap row.
+
+Build it as `xx_36_js.uf2`; `xx_36_js_debug.uf2` is the same thing with the raw
+millivolt readings on a USB serial console.
+
+## Joystick wiring
+
+| Module | nice!nano | Notes                                   |
+| ------ | --------- | --------------------------------------- |
+| `GND`  | `GND`     |                                         |
+| `+5V`  | `VCC`     | 3.3 V — the ADC range assumes this rail |
+| `VRx`  | `D20`     | AIN5 / P0.29                            |
+| `VRy`  | `D21`     | AIN7 / P0.31                            |
+| `SW`   | `D18`     | stick press, active low                 |
+
+Only `P0.02` (D19), `P0.29` (D20) and `P0.31` (D21) are both ADC-capable and
+broken out on a nice!nano, so the two axes have to share those three pads.
+These overlap the trackball's pins, which is why the two are separate shields
+rather than one board carrying both.
+
+## How it works
+
+`zmk,input-analog-stick` (`drivers/input/input_analog_stick.c`) samples both
+axes at `sampling-hz`, subtracts the resting voltage, ignores anything inside
+`deadzone-mv`, and reports the remainder as **relative** motion. So deflection
+is a speed, not a position: push further, move faster.
+
+Relative is not a stylistic choice. ZMK v0.3.0's input listener has an empty
+`handle_abs_code`, so absolute axis events are silently discarded — an
+`INPUT_EV_ABS` driver cannot move the cursor no matter how it is configured.
+This is also why `zephyr,analog-axis` is not used here; it does not exist in
+Zephyr 3.5 at all, which is what produces `undefined reference to
+__device_dts_ord_N` at link time if you reference that compatible.
+
+The centre voltage is measured over the first 16 samples at startup, so
+**don't hold the stick while the board boots**. Pin it down with `centre-mv`
+if you would rather not rely on that.
+
+## Tuning
+
+- **Cursor creeps when released.** Raise `deadzone-mv`. Speed is measured from
+  the *edge* of the deadzone, so widening it doesn't introduce a jump.
+- **Too slow / too fast.** Lower `scale-divisor` to speed up. Division
+  leftovers carry between ticks, so even a tiny deflection still creeps
+  instead of rounding to zero.
+- **An axis is reversed.** Add `invert-x;` or `invert-y;`.
+- **Axes swapped** (stick mounted rotated): add `swap-xy;`.
+- **Battery drain.** The ADC runs continuously at `sampling-hz`. Lower it if
+  idle current matters more than smoothness.
+- **Calibration.** Flash `xx_36_js_debug.uf2` and read the console: startup
+  logs `stick centred at x=… mV y=… mV`, and every movement logs its raw
+  millivolts and the resulting delta.

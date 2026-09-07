@@ -1,0 +1,53 @@
+/*
+ * Shared 3x3 test matrix for the my_36 variants. The pointing device lives in
+ * the per-variant overlay: my_36 has the BlackBerry trackball, my_36_js the
+ * analog joystick.
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+
+/ {
+    chosen {
+        zmk,physical-layout = &physical_layout0;
+        zmk,kscan = &kscan0;
+    };
+
+    default_transform: keymap_transform0 {
+        compatible = "zmk,matrix-transform";
+        columns = <3>; // Length of the "col-gpios" array
+        rows = <3>; // Length of the "row-gpios" array
+        map = <
+        //   Key 1 | Key 2 | Key 3
+            RC(0,0) RC(0,1) RC(0,2)
+        //   Key 4 | Key 5 | Key 6
+            RC(1,0) RC(1,1) RC(1,2)
+        //   Key 7 | Key 8 | Key 9
+            RC(2,0) RC(2,1) RC(2,2)
+        >;
+    };
+
+    kscan0: kscan0 {
+        compatible = "zmk,kscan-gpio-matrix";
+        diode-direction = "col2row";
+        wakeup-source;
+
+        col-gpios
+            = <&pro_micro 4 GPIO_ACTIVE_HIGH>
+            , <&pro_micro 5 GPIO_ACTIVE_HIGH>
+            , <&pro_micro 16 GPIO_ACTIVE_HIGH>
+            ;
+
+        row-gpios
+            = <&pro_micro 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+    };
+
+    physical_layout0: physical_layout_0 {
+        compatible = "zmk,physical-layout";
+        display-name = "Default Layout";
+        kscan = <&kscan0>;
+        transform = <&default_transform>;
+    };
+};

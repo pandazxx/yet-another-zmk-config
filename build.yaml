@@ -69,6 +69,22 @@ include:
     artifact-name: xx_36_debug
     snippet: zmk-usb-logging
 
+  # Analog joystick instead of the trackball. Same matrix, same keymap layout
+  # but with mouse buttons on the bottom row for testing clicks.
+  - board: nice_nano_v2
+    shield: my_36_js
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36_js\"
+    artifact-name: xx_36_js
+    snippet: studio-rpc-usb-uart
+
+  # Joystick build with the raw millivolt readings on a USB serial console,
+  # for finding the centre voltage and a deadzone that stops the drift.
+  - board: nice_nano_v2
+    shield: my_36_js
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36_js_dbg\" -DCONFIG_INPUT_LOG_LEVEL_DBG=y
+    artifact-name: xx_36_js_debug
+    snippet: zmk-usb-logging
+
     ### nice_oled START ###
     # nice_nano_v2 + nice_oled
   - board: nice_nano_v2
