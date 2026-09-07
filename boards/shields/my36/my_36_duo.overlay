@@ -62,6 +62,9 @@
         deadzone-mv = <80>;
         scale-multiplier = <1>;
         scale-divisor = <40>;
+
+        // The stick's horizontal pot runs the other way to the cursor.
+        invert-x;
     };
 
     stick_listener: stick_listener {
