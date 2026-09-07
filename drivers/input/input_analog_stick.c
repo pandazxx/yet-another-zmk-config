@@ -94,17 +94,27 @@ static void as_sample_work(struct k_work *work) {
 
     k_work_schedule(&data->sample_work, K_MSEC(1000 / config->sampling_hz));
 
-    int ret = adc_read(config->adc, &data->sequence);
-
-    /* Calibration is a one-shot on the first conversion only. */
-    data->sequence.calibrate = false;
-
-    if (ret < 0) {
-        LOG_ERR("failed to read the stick: %d", ret);
-        return;
-    }
-
+    /*
+     * One axis per conversion: the nRF SAADC refuses oversampling on a
+     * multi-channel scan (-EINVAL), and oversampling is worth more here than
+     * saving a second read, since a bare potentiometer reading is noisy
+     * enough to creep through the deadzone.
+     */
     for (uint8_t i = 0; i < AS_AXIS_COUNT; i++) {
+        data->sequence.channels = BIT(i);
+        data->sequence.buffer = &data->raw[i];
+        data->sequence.buffer_size = sizeof(data->raw[i]);
+
+        int ret = adc_read(config->adc, &data->sequence);
+
+        /* Calibration is a one-shot on the first conversion only. */
+        data->sequence.calibrate = false;
+
+        if (ret < 0) {
+            LOG_ERR("failed to read the stick: %d", ret);
+            return;
+        }
+
         mv[i] = data->raw[i];
         adc_raw_to_millivolts(adc_ref_internal(config->adc), data->channels[i].gain,
                               data->sequence.resolution, &mv[i]);
@@ -209,10 +219,8 @@ static int as_init(const struct device *dev) {
         }
     }
 
+    /* channels / buffer are set per axis at sample time. */
     data->sequence = (struct adc_sequence){
-        .channels = BIT(AS_AXIS_X) | BIT(AS_AXIS_Y),
-        .buffer = data->raw,
-        .buffer_size = sizeof(data->raw),
         .resolution = 12,
         .oversampling = 4,
         .calibrate = true,
