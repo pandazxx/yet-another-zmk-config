@@ -51,3 +51,13 @@
         transform = <&default_transform>;
     };
 };
+
+/*
+ * D16 is P0.10, which the nRF52840 reserves for the NFC antenna by default.
+ * Without this the column only works if some earlier firmware happened to
+ * program UICR, and a chip erase would silently break it. The switch is
+ * one-way: going back to NFC needs a UICR erase.
+ */
+&uicr {
+    nfct-pins-as-gpios;
+};

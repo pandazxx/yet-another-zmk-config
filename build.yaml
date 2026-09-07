@@ -85,6 +85,20 @@ include:
     artifact-name: xx_36_js_debug
     snippet: zmk-usb-logging
 
+  # Trackball and joystick together. The trackball moves onto plain digital
+  # pins so the joystick can have the two ADC-capable ones.
+  - board: nice_nano_v2
+    shield: my_36_duo
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36_duo\"
+    artifact-name: xx_36_duo
+    snippet: studio-rpc-usb-uart
+
+  - board: nice_nano_v2
+    shield: my_36_duo
+    cmake-args: -DCONFIG_ZMK_KEYBOARD_NAME=\"my_36_duo_dbg\" -DCONFIG_INPUT_LOG_LEVEL_DBG=y
+    artifact-name: xx_36_duo_debug
+    snippet: zmk-usb-logging
+
     ### nice_oled START ###
     # nice_nano_v2 + nice_oled
   - board: nice_nano_v2

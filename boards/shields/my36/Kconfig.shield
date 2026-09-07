@@ -4,3 +4,6 @@ config SHIELD_MY_36
 
 config SHIELD_MY_36_JS
     def_bool $(shields_list_contains,my_36_js)
+
+config SHIELD_MY_36_DUO
+    def_bool $(shields_list_contains,my_36_duo)

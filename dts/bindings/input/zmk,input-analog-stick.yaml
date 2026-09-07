@@ -27,6 +27,14 @@ properties:
       turned into a left click by the input listener. Usually active low and
       wants a pull-up.
 
+  btn-code:
+    type: int
+    description: |
+      Input code reported for the button, INPUT_BTN_0 (left click) when not
+      given. Set it to INPUT_BTN_1 for a right click, which matters when two
+      pointing devices are fitted and would otherwise both click left. Needs
+      #include <zephyr/dt-bindings/input/input-event-codes.h> in the overlay.
+
   sampling-hz:
     type: int
     default: 100

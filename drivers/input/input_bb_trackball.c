@@ -35,6 +35,7 @@ struct bb_trackball_config {
     struct gpio_dt_spec dirs[BB_DIR_COUNT];
     struct gpio_dt_spec btn;
     uint16_t report_interval_ms;
+    uint16_t btn_code;
     bool invert_x;
     bool invert_y;
     bool swap_xy;
@@ -140,7 +141,7 @@ static void bb_trackball_btn_work(struct k_work *work) {
         return;
     }
 
-    input_report_key(dev, INPUT_BTN_0, pressed, true, K_FOREVER);
+    input_report_key(dev, config->btn_code, pressed, true, K_FOREVER);
 }
 
 /*
@@ -271,6 +272,7 @@ static int bb_trackball_init(const struct device *dev) {
             },                                                                                     \
         .btn = GPIO_DT_SPEC_INST_GET_OR(n, btn_gpios, {0}),                                        \
         .report_interval_ms = DT_INST_PROP(n, report_interval_ms),                                 \
+        .btn_code = DT_INST_PROP_OR(n, btn_code, INPUT_BTN_0),                                 \
         .invert_x = DT_INST_PROP(n, invert_x),                                                     \
         .invert_y = DT_INST_PROP(n, invert_y),                                                     \
         .swap_xy = DT_INST_PROP(n, swap_xy),                                                       \

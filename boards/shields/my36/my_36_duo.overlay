@@ -1,0 +1,71 @@
+#include "my_36.dtsi"
+#include <input/processors.dtsi>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+&adc {
+    status = "okay";
+};
+
+/ {
+    // ==================================================================
+    // Both pointing devices at once.
+    //
+    // Only P0.02 (D19), P0.29 (D20) and P0.31 (D21) are both ADC-capable
+    // and broken out on a nice!nano, so the joystick axes have first claim
+    // on two of them. The trackball needs nothing but edge interrupts, so
+    // it moves off to plain digital pins.
+    //
+    //   Trackball          Joystick
+    //   UP  -> D9          VRx -> D20 (AIN5)
+    //   DWN -> D8          VRy -> D21 (AIN7)
+    //   LFT -> D6          SW  -> D19
+    //   RHT -> D14         +5V -> VCC (3.3V)
+    //   BTN -> D15         GND -> GND
+    //   VCC -> VCC
+    //   GND -> GND
+    //
+    // Matrix keeps D2/D3/D7 (rows) and D4/D5/D16 (columns).
+    // That leaves D0, D1, D10 and D18 free.
+    //
+    // The ball click stays a left click; the stick press is mapped to a
+    // right click so the two buttons do not collide.
+    // ==================================================================
+    trackball: trackball {
+        compatible = "zmk,input-bb-trackball";
+        status = "okay";
+
+        up-gpios    = <&pro_micro 9 GPIO_ACTIVE_HIGH>;
+        down-gpios  = <&pro_micro 8 GPIO_ACTIVE_HIGH>;
+        left-gpios  = <&pro_micro 6 GPIO_ACTIVE_HIGH>;
+        right-gpios = <&pro_micro 14 GPIO_ACTIVE_HIGH>;
+        btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+
+        report-interval-ms = <10>;
+    };
+
+    trackball_listener: trackball_listener {
+        compatible = "zmk,input-listener";
+        device = <&trackball>;
+        input-processors = <&zip_xy_scaler 64 1>;
+    };
+
+    stick: analog_stick {
+        compatible = "zmk,input-analog-stick";
+        status = "okay";
+
+        io-channels = <&adc 5>, <&adc 7>;   // AIN5 = P0.29, AIN7 = P0.31
+        btn-gpios = <&pro_micro 19 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+        btn-code = <INPUT_BTN_1>;           // right click
+
+        sampling-hz = <100>;
+        centre-mv = <0>;                    // measured during startup
+        deadzone-mv = <80>;
+        scale-multiplier = <1>;
+        scale-divisor = <40>;
+    };
+
+    stick_listener: stick_listener {
+        compatible = "zmk,input-listener";
+        device = <&stick>;
+    };
+};

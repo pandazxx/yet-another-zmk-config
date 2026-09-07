@@ -42,6 +42,14 @@ properties:
       mouse button, by the input listener. Omit it if you would rather wire
       the switch into your key matrix and bind &mkp in the keymap.
 
+  btn-code:
+    type: int
+    description: |
+      Input code reported for the button, INPUT_BTN_0 (left click) when not
+      given. Set it to INPUT_BTN_1 for a right click, which matters when two
+      pointing devices are fitted and would otherwise both click left. Needs
+      #include <zephyr/dt-bindings/input/input-event-codes.h> in the overlay.
+
   report-interval-ms:
     type: int
     default: 10

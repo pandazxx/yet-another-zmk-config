@@ -34,6 +34,7 @@ struct as_config {
     uint8_t inputs[AS_AXIS_COUNT];
     struct gpio_dt_spec btn;
     uint16_t sampling_hz;
+    uint16_t btn_code;
     uint16_t deadzone_mv;
     uint16_t centre_mv;
     uint16_t scale_multiplier;
@@ -172,7 +173,7 @@ static void as_btn_work(struct k_work *work) {
         return;
     }
 
-    input_report_key(data->dev, INPUT_BTN_0, pressed, true, K_FOREVER);
+    input_report_key(data->dev, config->btn_code, pressed, true, K_FOREVER);
 }
 
 static int as_init(const struct device *dev) {
@@ -268,6 +269,7 @@ static int as_init(const struct device *dev) {
             },                                                                                     \
         .btn = GPIO_DT_SPEC_INST_GET_OR(n, btn_gpios, {0}),                                        \
         .sampling_hz = DT_INST_PROP(n, sampling_hz),                                               \
+        .btn_code = DT_INST_PROP_OR(n, btn_code, INPUT_BTN_0),                                               \
         .deadzone_mv = DT_INST_PROP(n, deadzone_mv),                                               \
         .centre_mv = DT_INST_PROP(n, centre_mv),                                                   \
         .scale_multiplier = DT_INST_PROP(n, scale_multiplier),                                     \
