@@ -1,0 +1,9 @@
+file_format: "1"
+id: fourkeys
+name: 4Keys Joystick Mouse
+type: shield
+url: https://github.com/mctechnology17/zmk-config
+requires_extra_port: false
+features:
+  - keys
+  - analog-input

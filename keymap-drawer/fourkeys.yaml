@@ -1,0 +1,8 @@
+layout: {zmk_keyboard: fourkeys}
+layers:
+  default: ['&mkp LCLK', '&mkp RCLK', '&mkp MCLK', fn]
+  fn:
+  - '&msc SCRL_UP'
+  - '&msc SCRL_DOWN'
+  - ''
+  - {type: held}

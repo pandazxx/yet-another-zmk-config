@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2024 MC Technology
+ * SPDX-License-Identifier: MIT
+ *
+ * Keymap for the experimental 4-key + analog joystick keyboard.
+ *
+ * Physical layout (4 keys in a row):
+ *   ┌──────┬──────┬──────┬──────┐
+ *   │  K1  │  K2  │  K3  │  K4  │
+ *   └──────┴──────┴──────┴──────┘
+ *
+ * Default layer:
+ *   K1 = Left click   K2 = Right click   K3 = Middle click   K4 → FN layer
+ *
+ * FN layer:
+ *   K1 = Scroll up    K2 = Scroll down   K3 = none           K4 → (held)
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/mouse.h>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            // ┌──────────┬──────────┬──────────┬──────────┐
+            // │ LCLK     │ RCLK     │ MCLK     │ FN       │
+            // └──────────┴──────────┴──────────┴──────────┘
+            bindings = <
+                &mkp LCLK   &mkp RCLK   &mkp MCLK   &mo 1
+            >;
+        };
+
+        fn_layer {
+            // ┌──────────┬──────────┬──────────┬──────────┐
+            // │ SCRL UP  │ SCRL DN  │ none     │ (held)   │
+            // └──────────┴──────────┴──────────┴──────────┘
+            bindings = <
+                &msc SCRL_UP   &msc SCRL_DOWN   &none   &trans
+            >;
+        };
+    };
+};

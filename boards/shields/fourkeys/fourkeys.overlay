@@ -1,0 +1,11 @@
+/*
+ * Copyright (c) 2024 MC Technology
+ * SPDX-License-Identifier: MIT
+ *
+ * Shield overlay for the 4-key + joystick keyboard.
+ * Zephyr discovers the shield name from this file's basename (fourkeys).
+ * Board-specific ADC / joystick config is in <board>.overlay
+ * (e.g. nice_nano_v2.overlay).
+ */
+
+#include "fourkeys.dtsi"

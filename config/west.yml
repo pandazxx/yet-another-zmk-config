@@ -8,6 +8,9 @@ manifest:
     # nice_oled - nice_epaper - dongle_display!view - oled Adapter
     - name: mctechnology17
       url-base: https://github.com/mctechnology17
+    # zmk-analog-input-driver (joystick / thumbstick as mouse)
+    - name: badjeff
+      url-base: https://github.com/badjeff
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -28,6 +31,10 @@ manifest:
     # oled Adapter
     - name: zmk-oled-adapter
       remote: mctechnology17
+      revision: main
+    # analog input driver for joystick-as-mouse (4keys shield)
+    - name: zmk-analog-input-driver
+      remote: badjeff
       revision: main
   self:
     path: config

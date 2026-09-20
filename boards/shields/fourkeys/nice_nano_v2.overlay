@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2024 MC Technology
+ * SPDX-License-Identifier: MIT
+ *
+ * nice_nano_v2 board overlay for the 4keys joystick shield.
+ * Uses zmk-analog-input-driver (https://github.com/badjeff/zmk-analog-input-driver)
+ * to translate ADC joystick axes into relative mouse movement events.
+ *
+ * Joystick ADC wiring (adjust channel numbers and midpoint/scale to your hardware):
+ *   X axis → AIN3 (P0.29) = channel 3
+ *   Y axis → AIN5 (P0.31) = channel 5
+ *
+ * Calibration tips:
+ *   - Set mv-mid to the millivolt reading when the stick is centred (typically ~1650 mV)
+ *   - Set mv-min-max to the maximum deflection range from centre
+ *   - Increase mv-deadzone if the cursor drifts at rest
+ *   - Tune scale-multiplier / scale-divisor for comfortable pointer speed
+ *   - Add `invert;` to flip an axis if movement is reversed
+ *
+ * Enable debug logging (in 4keys.conf) to read raw ADC values during calibration:
+ *   CONFIG_ANALOG_INPUT_LOG_DBG_RAW=y
+ *   CONFIG_ANALOG_INPUT_LOG_DBG_REPORT=y
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+&adc {
+    status = "okay";
+};
+
+/ {
+    anin0: analog_input_0 {
+        compatible = "zmk,analog-input";
+        sampling-hz = <100>;
+
+        x-ch {
+            io-channels = <&adc 3>;     /* AIN3 = P0.29 */
+            mv-mid = <1650>;
+            mv-min-max = <1600>;
+            mv-deadzone = <0>;
+            scale-multiplier = <1>;
+            scale-divisor = <60>;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_X>;
+        };
+
+        y-ch {
+            io-channels = <&adc 5>;     /* AIN5 = P0.31 */
+            mv-mid = <1650>;
+            mv-min-max = <1600>;
+            mv-deadzone = <0>;
+            scale-multiplier = <1>;
+            scale-divisor = <60>;
+            invert;
+            evt-type = <INPUT_EV_REL>;
+            input-code = <INPUT_REL_Y>;
+        };
+    };
+
+    anin0_listener: anin0_listener {
+        compatible = "zmk,input-listener";
+        device = <&anin0>;
+    };
+};
