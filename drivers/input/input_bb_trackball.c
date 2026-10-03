@@ -36,6 +36,10 @@ struct bb_trackball_config {
     struct gpio_dt_spec btn;
     uint16_t report_interval_ms;
     uint16_t btn_code;
+    uint16_t accel_min_mult;
+    uint16_t accel_max_mult;
+    uint16_t accel_fast_ms;
+    uint16_t accel_slow_ms;
     bool invert_x;
     bool invert_y;
     bool swap_xy;
@@ -52,6 +56,8 @@ struct bb_trackball_data {
     atomic_t counts[BB_DIR_COUNT];
     struct bb_trackball_dir_data dirs[BB_DIR_COUNT];
     struct gpio_callback btn_cb;
+    uint32_t last_report_ms;
+    uint32_t avg_interval_ms;
     struct k_work_delayable report_work;
     struct k_work_delayable probe_work;
     struct k_work btn_work;
@@ -73,6 +79,53 @@ static void bb_trackball_dir_isr(const struct device *port, struct gpio_callback
     k_work_schedule(&data->report_work, K_MSEC(config->report_interval_ms));
 }
 
+/*
+ * Pointer acceleration. The ball resolves only ~9 pulses per revolution, so a
+ * fixed step has to choose between being usable across a screen and being
+ * usable on a button. Instead, derive the step from how fast the ball is
+ * turning: the spacing between pulses is the speed measure, and it maps onto
+ * a multiplier that ramps from accel-min-multiplier at accel-slow-interval-ms
+ * up to accel-max-multiplier at accel-fast-interval-ms.
+ */
+static uint16_t bb_trackball_multiplier(const struct bb_trackball_config *config,
+                                        struct bb_trackball_data *data, uint32_t pulses) {
+    uint32_t now = k_uptime_get_32();
+    uint32_t elapsed = now - data->last_report_ms;
+
+    data->last_report_ms = now;
+
+    if (config->accel_max_mult <= config->accel_min_mult) {
+        return config->accel_min_mult;
+    }
+
+    uint32_t interval = elapsed / pulses;
+
+    if (interval >= config->accel_slow_ms) {
+        /* Starting from rest, or crawling: begin slow rather than averaging
+         * in whatever speed the previous movement ended at. */
+        data->avg_interval_ms = config->accel_slow_ms;
+    } else if (data->avg_interval_ms == 0) {
+        data->avg_interval_ms = interval;
+    } else {
+        /* Smoothed, or the multiplier jitters between adjacent reports. */
+        data->avg_interval_ms = (data->avg_interval_ms + interval) / 2;
+    }
+
+    interval = data->avg_interval_ms;
+
+    if (interval <= config->accel_fast_ms) {
+        return config->accel_max_mult;
+    }
+    if (interval >= config->accel_slow_ms) {
+        return config->accel_min_mult;
+    }
+
+    uint32_t span = config->accel_slow_ms - config->accel_fast_ms;
+    uint32_t range = config->accel_max_mult - config->accel_min_mult;
+
+    return config->accel_min_mult + (range * (config->accel_slow_ms - interval)) / span;
+}
+
 static void bb_trackball_report_work(struct k_work *work) {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct bb_trackball_data *data = CONTAINER_OF(dwork, struct bb_trackball_data, report_work);
@@ -84,9 +137,17 @@ static void bb_trackball_report_work(struct k_work *work) {
     int32_t left = atomic_clear(&data->counts[BB_DIR_LEFT]);
     int32_t right = atomic_clear(&data->counts[BB_DIR_RIGHT]);
 
+    uint32_t pulses = up + down + left + right;
+
+    if (pulses == 0) {
+        return;
+    }
+
+    uint16_t mult = bb_trackball_multiplier(config, data, pulses);
+
     /* HID mouse coordinates grow right and *down*. */
-    int32_t x = right - left;
-    int32_t y = down - up;
+    int32_t x = (right - left) * mult;
+    int32_t y = (down - up) * mult;
 
     if (config->swap_xy) {
         int32_t tmp = x;
@@ -100,13 +161,11 @@ static void bb_trackball_report_work(struct k_work *work) {
         y = -y;
     }
 
-    if (up != 0 || down != 0 || left != 0 || right != 0) {
-        LOG_DBG("pulses up=%d down=%d left=%d right=%d -> x=%d y=%d (levels %d%d%d%d)", up, down,
-                left, right, x, y, gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
-                gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
-                gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
-                gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
-    }
+    LOG_DBG("pulses up=%d down=%d left=%d right=%d x%u -> x=%d y=%d (levels %d%d%d%d)", up, down,
+            left, right, (unsigned int)mult, x, y, gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
 
     if (x == 0 && y == 0) {
         return;
@@ -231,6 +290,13 @@ static int bb_trackball_init(const struct device *dev) {
     int ret;
 
     data->dev = dev;
+
+    if (config->accel_max_mult > config->accel_min_mult &&
+        config->accel_slow_ms <= config->accel_fast_ms) {
+        LOG_ERR("accel-slow-interval-ms must be greater than accel-fast-interval-ms");
+        return -EINVAL;
+    }
+
     k_work_init_delayable(&data->report_work, bb_trackball_report_work);
     k_work_init_delayable(&data->probe_work, bb_trackball_probe_work);
     k_work_init(&data->btn_work, bb_trackball_btn_work);
@@ -272,7 +338,11 @@ static int bb_trackball_init(const struct device *dev) {
             },                                                                                     \
         .btn = GPIO_DT_SPEC_INST_GET_OR(n, btn_gpios, {0}),                                        \
         .report_interval_ms = DT_INST_PROP(n, report_interval_ms),                                 \
-        .btn_code = DT_INST_PROP_OR(n, btn_code, INPUT_BTN_0),                                 \
+        .btn_code = DT_INST_PROP_OR(n, btn_code, INPUT_BTN_0),                                     \
+        .accel_min_mult = DT_INST_PROP(n, accel_min_multiplier),                                   \
+        .accel_max_mult = DT_INST_PROP(n, accel_max_multiplier),                                   \
+        .accel_fast_ms = DT_INST_PROP(n, accel_fast_interval_ms),                                  \
+        .accel_slow_ms = DT_INST_PROP(n, accel_slow_interval_ms),                                 \
         .invert_x = DT_INST_PROP(n, invert_x),                                                     \
         .invert_y = DT_INST_PROP(n, invert_y),                                                     \
         .swap_xy = DT_INST_PROP(n, swap_xy),                                                       \

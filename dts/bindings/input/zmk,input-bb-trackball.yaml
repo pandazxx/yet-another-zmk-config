@@ -58,6 +58,38 @@ properties:
       Lower values feel more responsive, higher values batch more movement
       into a single HID report.
 
+  accel-min-multiplier:
+    type: int
+    default: 1
+    description: |
+      Pixels per pulse when the ball is turning slowly, i.e. the finest step
+      the pointer can take. Leave at 1 with accel-max-multiplier to disable
+      acceleration and scale on the listener instead.
+
+  accel-max-multiplier:
+    type: int
+    default: 1
+    description: |
+      Pixels per pulse when the ball is spinning at or beyond
+      accel-fast-interval-ms. Must exceed accel-min-multiplier for
+      acceleration to engage.
+
+  accel-fast-interval-ms:
+    type: int
+    default: 20
+    description: |
+      Pulse spacing at or below which the pointer runs at
+      accel-max-multiplier.
+
+  accel-slow-interval-ms:
+    type: int
+    default: 150
+    description: |
+      Pulse spacing at or above which the pointer runs at
+      accel-min-multiplier. Also what the speed estimate resets to after a
+      pause, so a movement always starts at the fine step. Must be greater
+      than accel-fast-interval-ms.
+
   invert-x:
     type: boolean
     description: Negate the X axis (swap the LFT/RHT sense).

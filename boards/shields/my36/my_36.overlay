@@ -1,5 +1,4 @@
 #include "my_36.dtsi"
-#include <input/processors.dtsi>              // zip_xy_scaler & friends
 
 / {
     // ------------------------------------------------------------------
@@ -27,16 +26,21 @@
         btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 
         report-interval-ms = <10>;
+
+        // Pointer acceleration, in pixels per pulse. Rolling slowly gives
+        // 8 px steps for aiming; spinning the ball ramps up to 128 px for
+        // crossing the screen. Widen or narrow the pair to taste, and move
+        // the interval thresholds if the ramp comes in at the wrong speed.
+        accel-min-multiplier = <8>;
+        accel-max-multiplier = <128>;
+        accel-fast-interval-ms = <20>;
+        accel-slow-interval-ms = <150>;
     };
 
-    // The ball only emits ~9 pulses per revolution and per axis, so the raw
-    // deltas have to be multiplied up heavily: a thumb swipe is well under a
-    // full revolution, i.e. only a handful of pulses. The first parameter of
-    // zip_xy_scaler is the knob; it is also the cursor's step size in pixels,
-    // so raising it buys speed at the cost of a coarser, steppier cursor.
+    // No scaler here: the step size is speed-dependent and comes from the
+    // accel-* properties on the trackball node above.
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
-        input-processors = <&zip_xy_scaler 64 1>;
     };
 };
