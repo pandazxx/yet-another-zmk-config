@@ -106,7 +106,8 @@ static int accel_handle_event(const struct device *dev, struct input_event *even
                               (config->fast_speed - config->slow_speed);
     }
 
-    LOG_DBG("code %u value %d at %u units/s -> x%u", event->code, event->value, speed, mult);
+    LOG_DBG("code %u value %d at %u units/s -> x%u", (unsigned int)event->code, event->value,
+            speed, mult);
 
     event->value *= (int32_t)mult;
 
