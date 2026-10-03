@@ -82,23 +82,56 @@ reports, and it resets to the slow end after a pause — a correction made after
 lifting your thumb starts fine rather than inheriting the speed the last
 movement ended at.
 
-Both multipliers default to 1, so the feature is inert unless a board sets
-them. That is why there is no `zip_xy_scaler` on the listener any more: the
-step size now comes from the driver, and stacking a flat scaler on top would
-just undo the point of it.
+This lives in an **input processor**, not the driver — `zmk,input-processor-
+acceleration` in `drivers/input_processor/`. ZMK's model is that drivers report
+raw physical events and processors transform the stream on its way to HID, and
+acceleration is a transformation, not a property of the sensor. Upstream has no
+acceleration processor (not in v0.3.0, not on `main`), so this one is ours.
+
+Keeping it at that seam buys three things the in-driver version could not do:
+the joystick can reuse it, it chains with other processors, and a listener's
+per-layer child nodes can swap the curve — hold a layer for a precision mode,
+release for normal acceleration.
+
+```dts
+zip_accel: zip_accel {
+    compatible = "zmk,input-processor-acceleration";
+    #input-processor-cells = <2>;
+    codes = <INPUT_REL_X INPUT_REL_Y>;
+    slow-speed = <7>;      // pulses/second
+    fast-speed = <50>;
+};
+
+trackball_listener {
+    device = <&trackball>;
+    input-processors = <&zip_accel 8 128>;   // min px/pulse, max px/pulse
+};
+```
+
+Speed is in units per second, where a unit is whatever the device reports —
+pulses for the trackball, pixels for the joystick, which already emits a
+velocity. That is why the thresholds are not transferable between the two: the
+trackball idles around 7/s and spins at 50/s, while the joystick's slowest
+useful deflection is already 100/s. Give each device its own node.
+
+Each code is timed separately, because X and Y arrive as separate events within
+the same millisecond and a shared clock would read the second one as infinitely
+fast.
+
+There is no `zip_xy_scaler` on the listener any more: a flat multiplier stacked
+on the curve would just undo it.
 
 ## Tuning
 
-- **Too coarse when aiming.** Lower `accel-min-multiplier`. This is the
-  finest step the pointer can take, so it sets your precision floor.
-- **Too slow when crossing the screen.** Raise `accel-max-multiplier`.
-- **Acceleration kicks in too eagerly / too late.** Move the thresholds.
-  `accel-fast-interval-ms` is the pulse spacing at which you reach full
-  speed, `accel-slow-interval-ms` the spacing below which nothing
-  accelerates. Widening the gap makes the ramp more gradual.
-- **Want the old fixed step back.** Leave both multipliers at their default
-  of 1 and put `input-processors = <&zip_xy_scaler 64 1>;` back on the
-  listener.
+- **Too coarse when aiming.** Lower the first cell of `&zip_accel` — it is
+  the finest step the pointer can take, so it sets your precision floor.
+- **Too slow when crossing the screen.** Raise the second cell.
+- **Acceleration kicks in too eagerly / too late.** Move `slow-speed` and
+  `fast-speed` on the `zip_accel` node. Widening the gap between them makes
+  the ramp more gradual.
+- **Want a flat step instead.** Drop `&zip_accel` from `input-processors`
+  and use `<&zip_xy_scaler 64 1>`, restoring `#include
+  <input/processors.dtsi>` at the top of the overlay.
 - **An axis moves the wrong way.** Add `invert-x;` or `invert-y;` to the
   `trackball` node.
 - **X and Y are swapped** (module mounted rotated): add `swap-xy;`.
