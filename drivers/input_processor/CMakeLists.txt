@@ -1,0 +1,3 @@
+zephyr_library_named(zmk_config_input_processor)
+
+zephyr_library_sources(input_processor_acceleration.c)

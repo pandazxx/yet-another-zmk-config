@@ -41,21 +41,24 @@
 
         report-interval-ms = <10>;
 
-        // Pointer acceleration, in pixels per pulse. Rolling slowly gives
-        // 8 px steps for aiming; spinning the ball ramps up to 128 px for
-        // crossing the screen. Widen or narrow the pair to taste, and move
-        // the interval thresholds if the ramp comes in at the wrong speed.
-        accel-min-multiplier = <8>;
-        accel-max-multiplier = <128>;
-        accel-fast-interval-ms = <20>;
-        accel-slow-interval-ms = <150>;
     };
 
-    // No scaler here: the step size is speed-dependent and comes from the
-    // accel-* properties on the trackball node above.
+    // Pointer acceleration. Speed is in pulses per second: the ball emits
+    // only ~9 pulses per revolution, so 7/s is a careful nudge and 50/s is a
+    // deliberate spin. The cells on the listener are the pixels-per-pulse at
+    // each end - 8 px for aiming, 128 px for crossing the screen.
+    zip_accel: zip_accel {
+        compatible = "zmk,input-processor-acceleration";
+        #input-processor-cells = <2>;
+        codes = <INPUT_REL_X INPUT_REL_Y>;
+        slow-speed = <7>;
+        fast-speed = <50>;
+    };
+
     trackball_listener: trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
+        input-processors = <&zip_accel 8 128>;
     };
 
     stick: analog_stick {

@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MIT
+
+description: |
+  Input processor that scales relative motion by how fast the device is
+  moving, so one device can have a fine step for aiming and a large step for
+  crossing the screen.
+
+  Speed is measured per code in units per second, where a unit is whatever
+  the device reports: pulses per second for an incremental device such as a
+  trackball, pixels per second for a joystick that already reports a
+  velocity. The two multipliers are the processor's cells:
+
+    input-processors = <&zip_accel 8 128>;
+
+compatible: "zmk,input-processor-acceleration"
+
+include: ip_two_param.yaml
+
+properties:
+  type:
+    type: int
+    description: Event type to act on. INPUT_EV_REL when omitted.
+
+  codes:
+    type: array
+    required: true
+    description: |
+      Input codes to accelerate, usually INPUT_REL_X and INPUT_REL_Y. Each
+      code is timed separately, since X and Y arrive as separate events in
+      the same millisecond.
+
+  slow-speed:
+    type: int
+    required: true
+    description: |
+      Speed at or below which the first cell (the minimum multiplier) is
+      used. This is also what the speed estimate resets to after a pause, so
+      a movement always starts at the fine step.
+
+  fast-speed:
+    type: int
+    required: true
+    description: |
+      Speed at or above which the second cell (the maximum multiplier) is
+      used. Must be greater than slow-speed. Between the two the multiplier
+      ramps linearly.
