@@ -1,7 +1,17 @@
 # my_36 — test shield
 
-3x3 test matrix on a nice!nano v2, plus a BlackBerry trackball breakout used
-as a pointing device.
+A 3x3 test matrix on a nice!nano v2 with a pointing device bolted on. Three
+variants share the matrix (`my_36.dtsi`) and differ only in what they point
+with:
+
+| Shield      | Pointing device      | Artifact        |
+| ----------- | -------------------- | --------------- |
+| `my_36`     | BlackBerry trackball | `xx_36.uf2`     |
+| `my_36_js`  | analog joystick      | `xx_36_js.uf2`  |
+| `my_36_duo` | both at once         | `xx_36_duo.uf2` |
+
+Each has a matching `*_debug.uf2` that logs to a USB serial console. Pads left
+blank in the diagrams below are free for your own use.
 
 ## Trackball wiring
 
@@ -23,6 +33,25 @@ unconnected, or tie one through a resistor to `VCC` if you want it lit.
 `D21`–`D18` and `D15` are a contiguous run on the right-hand header, just below
 `VCC`. They avoid `D10`/`D16` (the nRF52840 NFC pins) and the matrix pins
 (`D2`, `D3`, `D7` rows; `D4`, `D5`, `D16` columns).
+
+### Pinout
+
+```
+              ┌──── USB ─────┐
+              │ D1       RAW │
+              │ D0       GND ├── ball GND
+              │ GND      RST │
+              │ GND      VCC ├── ball VCC
+      row 0 ──┤ D2       D21 ├── ball UP
+      row 1 ──┤ D3       D20 ├── ball DWN
+      col 0 ──┤ D4       D19 ├── ball LFT
+      col 1 ──┤ D5       D18 ├── ball RHT
+              │ D6       D15 ├── ball BTN
+      row 2 ──┤ D7       D14 │
+              │ D8       D16 ├── col 2
+              │ D9       D10 │
+              └──────────────┘
+```
 
 ## How it works
 
@@ -74,9 +103,28 @@ millivolt readings on a USB serial console.
 | `SW`   | `D18`     | stick press, active low                 |
 
 Only `P0.02` (D19), `P0.29` (D20) and `P0.31` (D21) are both ADC-capable and
-broken out on a nice!nano, so the two axes have to share those three pads.
-These overlap the trackball's pins, which is why the two are separate shields
-rather than one board carrying both.
+broken out on a nice!nano, so the two axes have to come from those three pads.
+They overlap the trackball's pins here, which is what `my_36_duo` below exists
+to resolve.
+
+### Pinout
+
+```
+              ┌──── USB ─────┐
+              │ D1       RAW │
+              │ D0       GND ├── stick GND
+              │ GND      RST │
+              │ GND      VCC ├── stick +5V
+      row 0 ──┤ D2       D21 ├── stick VRy
+      row 1 ──┤ D3       D20 ├── stick VRx
+      col 0 ──┤ D4       D19 │
+      col 1 ──┤ D5       D18 ├── stick SW
+              │ D6       D15 │
+      row 2 ──┤ D7       D14 │
+              │ D8       D16 ├── col 2
+              │ D9       D10 │
+              └──────────────┘
+```
 
 ## How it works
 
@@ -110,3 +158,65 @@ if you would rather not rely on that.
 - **Calibration.** Flash `xx_36_js_debug.uf2` and read the console: startup
   logs `stick centred at x=… mV y=… mV`, and every movement logs its raw
   millivolts and the resulting delta.
+
+---
+
+# my_36_duo — both pointing devices
+
+The trackball and the joystick on one board. ZMK creates one input listener
+per device and they all feed the same HID mouse, so nothing special is needed
+beyond finding enough pins.
+
+Only the joystick is really constrained: its axes have to come from the three
+ADC-capable pads. The trackball wants nothing but edge interrupts, so it moves
+onto plain digital pins and gives up the analog ones.
+
+### Pinout
+
+```
+              ┌──── USB ─────┐
+              │ D1       RAW │
+              │ D0       GND ├── both GND
+              │ GND      RST │
+              │ GND      VCC ├── both VCC
+      row 0 ──┤ D2       D21 ├── stick VRy
+      row 1 ──┤ D3       D20 ├── stick VRx
+      col 0 ──┤ D4       D19 ├── stick SW
+      col 1 ──┤ D5       D18 │
+   ball LFT ──┤ D6       D15 ├── ball BTN
+      row 2 ──┤ D7       D14 ├── ball RHT
+   ball DWN ──┤ D8       D16 ├── col 2
+    ball UP ──┤ D9       D10 │
+              └──────────────┘
+```
+
+Twelve of the eighteen pads are used. `D0`, `D1`, `D10` and `D18` stay free.
+
+### Wiring
+
+| Trackball | nice!nano | Joystick | nice!nano    |
+| --------- | --------- | -------- | ------------ |
+| `UP`      | `D9`      | `VRx`    | `D20` (AIN5) |
+| `DWN`     | `D8`      | `VRy`    | `D21` (AIN7) |
+| `LFT`     | `D6`      | `SW`     | `D19`        |
+| `RHT`     | `D14`     | `+5V`    | `VCC`        |
+| `BTN`     | `D15`     | `GND`    | `GND`        |
+| `VCC`     | `VCC`     |          |              |
+| `GND`     | `GND`     |          |              |
+
+The ball click stays a left click. The stick press is remapped to a right
+click with `btn-code = <INPUT_BTN_1>`, because both drivers otherwise report
+`INPUT_BTN_0` and the two buttons would collide.
+
+### Gotchas
+
+- **Phantom cursor movement.** If the trackball is not wired yet, its four
+  direction pins float and pick up noise. Add `GPIO_PULL_DOWN` to the four
+  `*-gpios` flags, or stay on `my_36_js` until it is wired.
+- **SAADC channels are global.** ZMK's battery sensor owns channel 0, so the
+  stick's axes start at channel 1. Sharing a slot makes one device silently
+  read the other's input; the symptom is an axis frozen at the battery
+  voltage, around 2716 mV.
+- **NFC pins.** `D16` is `P0.10`, which the nRF52840 reserves for the NFC
+  antenna by default. `my_36.dtsi` sets `nfct-pins-as-gpios` on `&uicr` so
+  that matrix column works on a freshly erased chip. The switch is one-way.
