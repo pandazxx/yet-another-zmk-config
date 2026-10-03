@@ -61,14 +61,44 @@ pulses, and every `report-interval-ms` emits the accumulated
 `right - left` / `down - up` as `INPUT_REL_X` / `INPUT_REL_Y`. `BTN` is
 reported as `INPUT_BTN_0`, which the input listener turns into a left click.
 
+### Acceleration
+
+The ball resolves only ~9 pulses per revolution per axis, which is coarse
+enough that no single step size works: big enough to cross a screen is far too
+big to land on a button. So the step is not fixed — it comes from how fast the
+ball is turning.
+
+The spacing between pulses is the speed measure. It maps linearly onto a
+multiplier:
+
+```
+ pulse spacing   >= accel-slow-interval-ms  ->  accel-min-multiplier   (8 px)
+                 <= accel-fast-interval-ms  ->  accel-max-multiplier (128 px)
+                           in between       ->  linear ramp
+```
+
+The estimate is smoothed so the multiplier doesn't jitter between adjacent
+reports, and it resets to the slow end after a pause — a correction made after
+lifting your thumb starts fine rather than inheriting the speed the last
+movement ended at.
+
+Both multipliers default to 1, so the feature is inert unless a board sets
+them. That is why there is no `zip_xy_scaler` on the listener any more: the
+step size now comes from the driver, and stacking a flat scaler on top would
+just undo the point of it.
+
 ## Tuning
 
-- **Too slow / too fast.** The ball only produces ~9 transitions per full
-  revolution per axis, which is why the listener multiplies by 64:
-  `input-processors = <&zip_xy_scaler 64 1>;`. Change the first parameter.
-  It doubles as the cursor's step size in pixels, so there is a trade-off:
-  higher is faster but moves the cursor in coarser jumps. 32–128 is the
-  usable range with this sensor.
+- **Too coarse when aiming.** Lower `accel-min-multiplier`. This is the
+  finest step the pointer can take, so it sets your precision floor.
+- **Too slow when crossing the screen.** Raise `accel-max-multiplier`.
+- **Acceleration kicks in too eagerly / too late.** Move the thresholds.
+  `accel-fast-interval-ms` is the pulse spacing at which you reach full
+  speed, `accel-slow-interval-ms` the spacing below which nothing
+  accelerates. Widening the gap makes the ramp more gradual.
+- **Want the old fixed step back.** Leave both multipliers at their default
+  of 1 and put `input-processors = <&zip_xy_scaler 64 1>;` back on the
+  listener.
 - **An axis moves the wrong way.** Add `invert-x;` or `invert-y;` to the
   `trackball` node.
 - **X and Y are swapped** (module mounted rotated): add `swap-xy;`.
