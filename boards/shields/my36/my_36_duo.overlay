@@ -76,7 +76,7 @@
         scale-divisor = <40>;
 
         // The stick's horizontal pot runs the other way to the cursor.
-        invert-x;
+        // invert-x;
     };
 
     stick_listener: stick_listener {
