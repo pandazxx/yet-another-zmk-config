@@ -1,0 +1,50 @@
+#include "my_36.dtsi"
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+    // ------------------------------------------------------------------
+    // BlackBerry trackball breakout
+    //
+    // Module -> nice!nano (right hand column, VCC downwards):
+    //   VCC -> VCC (3.3V)      GND -> GND
+    //   UP  -> D21             DWN -> D20
+    //   LFT -> D19             RHT -> D18
+    //   BTN -> D15
+    //   BLU / RED / GRN / WHT are the trackball's LEDs, leave unconnected.
+    //
+    // The direction pins are pushed high by the breakout, so no internal
+    // bias is requested here. If the module leaves them floating (phantom
+    // cursor movement while the ball is still), add GPIO_PULL_DOWN.
+    // ------------------------------------------------------------------
+    trackball: trackball {
+        compatible = "zmk,input-bb-trackball";
+        status = "okay";
+
+        up-gpios    = <&pro_micro 21 GPIO_ACTIVE_HIGH>;
+        down-gpios  = <&pro_micro 20 GPIO_ACTIVE_HIGH>;
+        left-gpios  = <&pro_micro 19 GPIO_ACTIVE_HIGH>;
+        right-gpios = <&pro_micro 18 GPIO_ACTIVE_HIGH>;
+        btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+
+        report-interval-ms = <10>;
+
+    };
+
+    // Pointer acceleration. Speed is in pulses per second: the ball emits
+    // only ~9 pulses per revolution, so 7/s is a careful nudge and 50/s is a
+    // deliberate spin. The cells on the listener are the pixels-per-pulse at
+    // each end - 8 px for aiming, 128 px for crossing the screen.
+    zip_accel: zip_accel {
+        compatible = "zmk,input-processor-acceleration";
+        #input-processor-cells = <2>;
+        codes = <INPUT_REL_X INPUT_REL_Y>;
+        slow-speed = <7>;
+        fast-speed = <50>;
+    };
+
+    trackball_listener: trackball_listener {
+        compatible = "zmk,input-listener";
+        device = <&trackball>;
+        input-processors = <&zip_accel 8 128>;
+    };
+};

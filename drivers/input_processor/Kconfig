@@ -1,0 +1,10 @@
+config ZMK_INPUT_PROCESSOR_ACCELERATION
+    bool "Pointer acceleration input processor"
+    default y
+    depends on DT_HAS_ZMK_INPUT_PROCESSOR_ACCELERATION_ENABLED
+    depends on ZMK_POINTING
+    help
+      Scales relative motion by how fast the pointing device is moving, so
+      a slow roll gives a fine step for aiming and a fast one gives a large
+      step for crossing the screen. Attach it to a listener with
+      input-processors = <&zip_accel MIN_MULT MAX_MULT>.

@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: MIT
+
+description: |
+  BlackBerry trackball breakout board.
+
+  Four hall-effect sensors expose one pin per direction (UP / DWN / LFT / RHT).
+  A pin toggles while the ball is rolled in that direction (roughly 9
+  transitions per full revolution of the ball, so a large scaler multiplier
+  on the input listener is normally required).
+
+  The optional ball-click switch (BTN, active low) is reported as INPUT_BTN_0.
+
+compatible: "zmk,input-bb-trackball"
+
+include: base.yaml
+
+properties:
+  up-gpios:
+    type: phandle-array
+    required: true
+    description: UP pin of the breakout.
+
+  down-gpios:
+    type: phandle-array
+    required: true
+    description: DWN pin of the breakout.
+
+  left-gpios:
+    type: phandle-array
+    required: true
+    description: LFT pin of the breakout.
+
+  right-gpios:
+    type: phandle-array
+    required: true
+    description: RHT pin of the breakout.
+
+  btn-gpios:
+    type: phandle-array
+    description: |
+      Optional BTN pin (ball click). Reported as INPUT_BTN_0, i.e. a left
+      mouse button, by the input listener. Omit it if you would rather wire
+      the switch into your key matrix and bind &mkp in the keymap.
+
+  btn-code:
+    type: int
+    description: |
+      Input code reported for the button, INPUT_BTN_0 (left click) when not
+      given. Set it to INPUT_BTN_1 for a right click, which matters when two
+      pointing devices are fitted and would otherwise both click left. Needs
+      #include <zephyr/dt-bindings/input/input-event-codes.h> in the overlay.
+
+  report-interval-ms:
+    type: int
+    default: 10
+    description: |
+      How long pulses are accumulated before a relative report is emitted.
+      Lower values feel more responsive, higher values batch more movement
+      into a single HID report.
+
+  accel-min-multiplier:
+    type: int
+    default: 1
+    description: |
+      Pixels per pulse when the ball is turning slowly, i.e. the finest step
+      the pointer can take. Leave at 1 with accel-max-multiplier to disable
+      acceleration and scale on the listener instead.
+
+  accel-max-multiplier:
+    type: int
+    default: 1
+    description: |
+      Pixels per pulse when the ball is spinning at or beyond
+      accel-fast-interval-ms. Must exceed accel-min-multiplier for
+      acceleration to engage.
+
+  accel-fast-interval-ms:
+    type: int
+    default: 20
+    description: |
+      Pulse spacing at or below which the pointer runs at
+      accel-max-multiplier.
+
+  accel-slow-interval-ms:
+    type: int
+    default: 150
+    description: |
+      Pulse spacing at or above which the pointer runs at
+      accel-min-multiplier. Also what the speed estimate resets to after a
+      pause, so a movement always starts at the fine step. Must be greater
+      than accel-fast-interval-ms.
+
+  invert-x:
+    type: boolean
+    description: Negate the X axis (swap the LFT/RHT sense).
+
+  invert-y:
+    type: boolean
+    description: Negate the Y axis (swap the UP/DWN sense).
+
+  swap-xy:
+    type: boolean
+    description: Exchange the X and Y axes, e.g. for a rotated module.

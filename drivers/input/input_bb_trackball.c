@@ -1,0 +1,355 @@
+/*
+ * BlackBerry trackball breakout input driver.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#define DT_DRV_COMPAT zmk_input_bb_trackball
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/input/input.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/sys/util.h>
+
+LOG_MODULE_REGISTER(bb_trackball, CONFIG_INPUT_LOG_LEVEL);
+
+/*
+ * The probe is deliberately late and repeating: at init it would land long
+ * before the USB console has enumerated, and its output would be dropped.
+ * Repeating also makes it usable as a wiggle test on a suspect joint.
+ */
+#define BB_TRACKBALL_PROBE_PERIOD_S 10
+
+enum bb_trackball_dir {
+    BB_DIR_UP,
+    BB_DIR_DOWN,
+    BB_DIR_LEFT,
+    BB_DIR_RIGHT,
+    BB_DIR_COUNT,
+};
+
+struct bb_trackball_config {
+    struct gpio_dt_spec dirs[BB_DIR_COUNT];
+    struct gpio_dt_spec btn;
+    uint16_t report_interval_ms;
+    uint16_t btn_code;
+    uint16_t accel_min_mult;
+    uint16_t accel_max_mult;
+    uint16_t accel_fast_ms;
+    uint16_t accel_slow_ms;
+    bool invert_x;
+    bool invert_y;
+    bool swap_xy;
+};
+
+struct bb_trackball_dir_data {
+    const struct device *dev;
+    struct gpio_callback cb;
+    uint8_t dir;
+};
+
+struct bb_trackball_data {
+    const struct device *dev;
+    atomic_t counts[BB_DIR_COUNT];
+    struct bb_trackball_dir_data dirs[BB_DIR_COUNT];
+    struct gpio_callback btn_cb;
+    uint32_t last_report_ms;
+    uint32_t avg_interval_ms;
+    struct k_work_delayable report_work;
+    struct k_work_delayable probe_work;
+    struct k_work btn_work;
+};
+
+static void bb_trackball_dir_isr(const struct device *port, struct gpio_callback *cb,
+                                 uint32_t pins) {
+    ARG_UNUSED(port);
+    ARG_UNUSED(pins);
+
+    struct bb_trackball_dir_data *dir_data = CONTAINER_OF(cb, struct bb_trackball_dir_data, cb);
+    const struct device *dev = dir_data->dev;
+    const struct bb_trackball_config *config = dev->config;
+    struct bb_trackball_data *data = dev->data;
+
+    atomic_inc(&data->counts[dir_data->dir]);
+
+    /* No-op if a report is already pending, so the counts simply keep piling up. */
+    k_work_schedule(&data->report_work, K_MSEC(config->report_interval_ms));
+}
+
+/*
+ * Pointer acceleration. The ball resolves only ~9 pulses per revolution, so a
+ * fixed step has to choose between being usable across a screen and being
+ * usable on a button. Instead, derive the step from how fast the ball is
+ * turning: the spacing between pulses is the speed measure, and it maps onto
+ * a multiplier that ramps from accel-min-multiplier at accel-slow-interval-ms
+ * up to accel-max-multiplier at accel-fast-interval-ms.
+ */
+static uint16_t bb_trackball_multiplier(const struct bb_trackball_config *config,
+                                        struct bb_trackball_data *data, uint32_t pulses) {
+    uint32_t now = k_uptime_get_32();
+    uint32_t elapsed = now - data->last_report_ms;
+
+    data->last_report_ms = now;
+
+    if (config->accel_max_mult <= config->accel_min_mult) {
+        return config->accel_min_mult;
+    }
+
+    uint32_t interval = elapsed / pulses;
+
+    if (interval >= config->accel_slow_ms) {
+        /* Starting from rest, or crawling: begin slow rather than averaging
+         * in whatever speed the previous movement ended at. */
+        data->avg_interval_ms = config->accel_slow_ms;
+    } else if (data->avg_interval_ms == 0) {
+        data->avg_interval_ms = interval;
+    } else {
+        /* Smoothed, or the multiplier jitters between adjacent reports. */
+        data->avg_interval_ms = (data->avg_interval_ms + interval) / 2;
+    }
+
+    interval = data->avg_interval_ms;
+
+    if (interval <= config->accel_fast_ms) {
+        return config->accel_max_mult;
+    }
+    if (interval >= config->accel_slow_ms) {
+        return config->accel_min_mult;
+    }
+
+    uint32_t span = config->accel_slow_ms - config->accel_fast_ms;
+    uint32_t range = config->accel_max_mult - config->accel_min_mult;
+
+    return config->accel_min_mult + (range * (config->accel_slow_ms - interval)) / span;
+}
+
+static void bb_trackball_report_work(struct k_work *work) {
+    struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+    struct bb_trackball_data *data = CONTAINER_OF(dwork, struct bb_trackball_data, report_work);
+    const struct device *dev = data->dev;
+    const struct bb_trackball_config *config = dev->config;
+
+    int32_t up = atomic_clear(&data->counts[BB_DIR_UP]);
+    int32_t down = atomic_clear(&data->counts[BB_DIR_DOWN]);
+    int32_t left = atomic_clear(&data->counts[BB_DIR_LEFT]);
+    int32_t right = atomic_clear(&data->counts[BB_DIR_RIGHT]);
+
+    uint32_t pulses = up + down + left + right;
+
+    if (pulses == 0) {
+        return;
+    }
+
+    uint16_t mult = bb_trackball_multiplier(config, data, pulses);
+
+    /* HID mouse coordinates grow right and *down*. */
+    int32_t x = (right - left) * mult;
+    int32_t y = (down - up) * mult;
+
+    if (config->swap_xy) {
+        int32_t tmp = x;
+        x = y;
+        y = tmp;
+    }
+    if (config->invert_x) {
+        x = -x;
+    }
+    if (config->invert_y) {
+        y = -y;
+    }
+
+    LOG_DBG("pulses up=%d down=%d left=%d right=%d x%u -> x=%d y=%d (levels %d%d%d%d)", up, down,
+            left, right, (unsigned int)mult, x, y, gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
+            gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
+
+    if (x == 0 && y == 0) {
+        return;
+    }
+
+    if (x != 0) {
+        input_report_rel(dev, INPUT_REL_X, x, y == 0, K_FOREVER);
+    }
+    if (y != 0) {
+        input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+    }
+}
+
+static void bb_trackball_btn_isr(const struct device *port, struct gpio_callback *cb,
+                                 uint32_t pins) {
+    ARG_UNUSED(port);
+    ARG_UNUSED(pins);
+
+    struct bb_trackball_data *data = CONTAINER_OF(cb, struct bb_trackball_data, btn_cb);
+
+    k_work_submit(&data->btn_work);
+}
+
+static void bb_trackball_btn_work(struct k_work *work) {
+    struct bb_trackball_data *data = CONTAINER_OF(work, struct bb_trackball_data, btn_work);
+    const struct device *dev = data->dev;
+    const struct bb_trackball_config *config = dev->config;
+
+    int pressed = gpio_pin_get_dt(&config->btn);
+    if (pressed < 0) {
+        LOG_ERR("failed to read the trackball button (%d)", pressed);
+        return;
+    }
+
+    input_report_key(dev, config->btn_code, pressed, true, K_FOREVER);
+}
+
+/*
+ * Tell a driven line apart from a floating one: bias the pin high, then low,
+ * and see whether anything on the other end overrules us. A pin that follows
+ * the bias is high impedance - nothing is driving it - while a pin that reads
+ * the same under both biases is being held by the module.
+ */
+static void bb_trackball_probe_pin(const struct gpio_dt_spec *spec, const char *name) {
+    int with_pull_up = -1;
+    int with_pull_down = -1;
+
+    if (gpio_pin_configure(spec->port, spec->pin, GPIO_INPUT | GPIO_PULL_UP) == 0) {
+        k_busy_wait(200);
+        with_pull_up = gpio_pin_get_raw(spec->port, spec->pin);
+    }
+
+    if (gpio_pin_configure(spec->port, spec->pin, GPIO_INPUT | GPIO_PULL_DOWN) == 0) {
+        k_busy_wait(200);
+        with_pull_down = gpio_pin_get_raw(spec->port, spec->pin);
+    }
+
+    /* Back to whatever the devicetree asked for. */
+    gpio_pin_configure_dt(spec, GPIO_INPUT);
+
+    LOG_INF("%s pin: pull-up reads %d, pull-down reads %d -> %s", name, with_pull_up,
+            with_pull_down,
+            (with_pull_up == with_pull_down) ? "driven by the module" : "floating (nothing driving it)");
+}
+
+/*
+ * Interrupts are already armed by the time this runs, so drop them for the
+ * duration of the probe and put them straight back.
+ */
+static void bb_trackball_probe_work(struct k_work *work) {
+    struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+    struct bb_trackball_data *data = CONTAINER_OF(dwork, struct bb_trackball_data, probe_work);
+    const struct bb_trackball_config *config = data->dev->config;
+    static const char *const dir_names[BB_DIR_COUNT] = {"up", "down", "left", "right"};
+
+    for (uint8_t i = 0; i < BB_DIR_COUNT; i++) {
+        const struct gpio_dt_spec *spec = &config->dirs[i];
+
+        gpio_pin_interrupt_configure_dt(spec, GPIO_INT_DISABLE);
+        bb_trackball_probe_pin(spec, dir_names[i]);
+        gpio_pin_interrupt_configure_dt(spec, GPIO_INT_EDGE_BOTH);
+    }
+
+    k_work_schedule(&data->probe_work, K_SECONDS(BB_TRACKBALL_PROBE_PERIOD_S));
+}
+
+static int bb_trackball_init_pin(const struct device *dev, const struct gpio_dt_spec *spec,
+                                 struct gpio_callback *cb, gpio_callback_handler_t handler) {
+    int ret;
+
+    if (!gpio_is_ready_dt(spec)) {
+        LOG_ERR("GPIO port %s is not ready", spec->port ? spec->port->name : "(null)");
+        return -ENODEV;
+    }
+
+    ret = gpio_pin_configure_dt(spec, GPIO_INPUT);
+    if (ret < 0) {
+        LOG_ERR("failed to configure pin %d (%d)", spec->pin, ret);
+        return ret;
+    }
+
+    gpio_init_callback(cb, handler, BIT(spec->pin));
+
+    ret = gpio_add_callback(spec->port, cb);
+    if (ret < 0) {
+        LOG_ERR("failed to add callback for pin %d (%d)", spec->pin, ret);
+        return ret;
+    }
+
+    ret = gpio_pin_interrupt_configure_dt(spec, GPIO_INT_EDGE_BOTH);
+    if (ret < 0) {
+        LOG_ERR("failed to enable interrupts on pin %d (%d)", spec->pin, ret);
+        return ret;
+    }
+
+    return 0;
+}
+
+static int bb_trackball_init(const struct device *dev) {
+    const struct bb_trackball_config *config = dev->config;
+    struct bb_trackball_data *data = dev->data;
+    int ret;
+
+    data->dev = dev;
+
+    if (config->accel_max_mult > config->accel_min_mult &&
+        config->accel_slow_ms <= config->accel_fast_ms) {
+        LOG_ERR("accel-slow-interval-ms must be greater than accel-fast-interval-ms");
+        return -EINVAL;
+    }
+
+    k_work_init_delayable(&data->report_work, bb_trackball_report_work);
+    k_work_init_delayable(&data->probe_work, bb_trackball_probe_work);
+    k_work_init(&data->btn_work, bb_trackball_btn_work);
+
+    for (uint8_t i = 0; i < BB_DIR_COUNT; i++) {
+        data->dirs[i].dev = dev;
+        data->dirs[i].dir = i;
+
+
+        ret = bb_trackball_init_pin(dev, &config->dirs[i], &data->dirs[i].cb,
+                                    bb_trackball_dir_isr);
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+    if (config->btn.port != NULL) {
+        ret = bb_trackball_init_pin(dev, &config->btn, &data->btn_cb, bb_trackball_btn_isr);
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+    k_work_schedule(&data->probe_work, K_SECONDS(BB_TRACKBALL_PROBE_PERIOD_S));
+
+    return 0;
+}
+
+#define BB_TRACKBALL_INST(n)                                                                       \
+    static struct bb_trackball_data bb_trackball_data_##n;                                         \
+                                                                                                   \
+    static const struct bb_trackball_config bb_trackball_config_##n = {                            \
+        .dirs =                                                                                    \
+            {                                                                                      \
+                [BB_DIR_UP] = GPIO_DT_SPEC_INST_GET(n, up_gpios),                                  \
+                [BB_DIR_DOWN] = GPIO_DT_SPEC_INST_GET(n, down_gpios),                              \
+                [BB_DIR_LEFT] = GPIO_DT_SPEC_INST_GET(n, left_gpios),                              \
+                [BB_DIR_RIGHT] = GPIO_DT_SPEC_INST_GET(n, right_gpios),                            \
+            },                                                                                     \
+        .btn = GPIO_DT_SPEC_INST_GET_OR(n, btn_gpios, {0}),                                        \
+        .report_interval_ms = DT_INST_PROP(n, report_interval_ms),                                 \
+        .btn_code = DT_INST_PROP_OR(n, btn_code, INPUT_BTN_0),                                     \
+        .accel_min_mult = DT_INST_PROP(n, accel_min_multiplier),                                   \
+        .accel_max_mult = DT_INST_PROP(n, accel_max_multiplier),                                   \
+        .accel_fast_ms = DT_INST_PROP(n, accel_fast_interval_ms),                                  \
+        .accel_slow_ms = DT_INST_PROP(n, accel_slow_interval_ms),                                 \
+        .invert_x = DT_INST_PROP(n, invert_x),                                                     \
+        .invert_y = DT_INST_PROP(n, invert_y),                                                     \
+        .swap_xy = DT_INST_PROP(n, swap_xy),                                                       \
+    };                                                                                             \
+                                                                                                   \
+    DEVICE_DT_INST_DEFINE(n, bb_trackball_init, NULL, &bb_trackball_data_##n,                      \
+                          &bb_trackball_config_##n, POST_KERNEL, CONFIG_INPUT_INIT_PRIORITY,       \
+                          NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(BB_TRACKBALL_INST)
