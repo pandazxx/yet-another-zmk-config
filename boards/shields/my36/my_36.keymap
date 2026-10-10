@@ -11,7 +11,7 @@
             // |     A     |     B     |     C     |
             // |     D     |     E     |     F     |
             bindings = <
-                &kp Z    &kp M    &kp K
+                &bootloader &kp M    &kp K
                 &kp A    &kp B    &kp C
                 &kp D    &kp E    &kp F
             >;
