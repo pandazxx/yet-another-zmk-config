@@ -172,6 +172,8 @@ static struct zmk_input_processor_driver_api accel_driver_api = {
         .type = DT_INST_PROP_OR(n, type, INPUT_EV_REL),                                            \
         .slow_speed = DT_INST_PROP(n, slow_speed),                                                 \
         .fast_speed = DT_INST_PROP(n, fast_speed),                                                 \
+        .speed_window_ms = DT_INST_PROP(n, speed_window_ms),                                       \
+        .unit_divisor = DT_INST_PROP(n, unit_divisor),                                             \
         .codes_len = DT_INST_PROP_LEN(n, codes),                                                   \
         .codes = accel_codes_##n,                                                                  \
     };                                                                                             \
