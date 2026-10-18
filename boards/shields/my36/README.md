@@ -98,7 +98,8 @@ zip_accel: zip_accel {
     compatible = "zmk,input-processor-acceleration";
     #input-processor-cells = <2>;
     codes = <INPUT_REL_X INPUT_REL_Y>;
-    slow-speed = <7>;      // pulses/second
+    unit-divisor = <4>;    // = the trackball's smoothing-steps
+    slow-speed = <12>;     // pulses/second
     fast-speed = <50>;
 };
 
@@ -111,12 +112,29 @@ trackball_listener {
 Speed is in units per second, where a unit is whatever the device reports —
 pulses for the trackball, pixels for the joystick, which already emits a
 velocity. That is why the thresholds are not transferable between the two: the
-trackball idles around 7/s and spins at 50/s, while the joystick's slowest
+trackball idles around 10/s and spins at 50/s, while the joystick's slowest
 useful deflection is already 100/s. Give each device its own node.
 
 Each code is timed separately, because X and Y arrive as separate events within
 the same millisecond and a shared clock would read the second one as infinitely
 fast.
+
+Speed is the movement seen over a trailing `speed-window-ms` (150 ms), not the
+gap between the last two events. A slow ball gives one pulse per report and the
+gap wanders by 2x from mechanical and timer noise, which used to show up as the
+step size flipping between 8 px and 16 px on a steady roll. Everything below
+`slow-speed` stays on the flat fine step, so keep it above the pulse rate of a
+slow, deliberate roll.
+
+### Smoothing
+
+The ball gives ~9 pulses a revolution, so one pulse is one 8 px lump.
+`smoothing-steps` on the trackball spreads each pulse over that many report
+intervals (4 x 10 ms = a 40 ms glide, largest step ~2 px at the fine end). The
+driver then reports quarter-pulses, so `unit-divisor` on the processor must be
+set to the same number; the fractions are carried, never rounded, so distance
+travelled is unchanged. Cost: up to `smoothing-steps x report-interval-ms` of
+extra latency on the end of a movement. Set both to 1 to turn it off.
 
 There is no `zip_xy_scaler` on the listener any more: a flat multiplier stacked
 on the curve would just undo it.
@@ -137,7 +155,11 @@ on the curve would just undo it.
 - **X and Y are swapped** (module mounted rotated): add `swap-xy;`.
 - **Cursor drifts while the ball is still.** The direction pins are probably
   floating; add `GPIO_PULL_DOWN` to the four `*-gpios` flags.
-- **Movement feels chunky.** Lower `report-interval-ms`.
+- **Movement feels chunky.** Raise `smoothing-steps` (and `unit-divisor` with
+  it), or lower `report-interval-ms`.
+- **Cursor feels laggy at the end of a flick.** Lower `smoothing-steps`.
+- **Step size still wobbles on a slow roll.** Raise `slow-speed` or
+  `speed-window-ms`.
 - **Debugging.** Uncomment `CONFIG_INPUT_LOG_LEVEL_DBG=y` in `my_36.conf` and
   read the deltas over the USB CDC console (the build already uses the
   `studio-rpc-usb-uart` snippet).

@@ -23,15 +23,23 @@ LOG_MODULE_REGISTER(zip_accel, CONFIG_INPUT_LOG_LEVEL);
  */
 #define ACCEL_MAX_LISTENERS 4
 
+/* The decayed event total is kept in 1/256ths so the decay does not round away. */
+#define ACCEL_Q 256
+
 struct accel_axis_state {
     uint32_t last_ms;
-    uint32_t avg_speed;
+    /* Recent movement in input units, decayed over speed-window-ms. */
+    uint32_t recent_q;
+    /* Division leftovers from unit-divisor, carried into the next event. */
+    int32_t remainder;
 };
 
 struct accel_config {
     uint8_t type;
     uint32_t slow_speed;
     uint32_t fast_speed;
+    uint32_t speed_window_ms;
+    uint32_t unit_divisor;
     size_t codes_len;
     const uint16_t *codes;
 };
@@ -81,19 +89,24 @@ static int accel_handle_event(const struct device *dev, struct input_event *even
 
     axis->last_ms = now;
 
-    /* Two events in the same millisecond can only mean fast. */
-    uint32_t speed = elapsed ? (magnitude * 1000U) / elapsed : config->fast_speed;
-
-    if (speed <= config->slow_speed || axis->avg_speed == 0) {
-        /* Coming from rest: start at the fine end instead of inheriting the
-         * speed the previous movement happened to finish at. */
-        axis->avg_speed = speed;
+    /*
+     * Speed is the movement inside a short trailing window, not the gap since
+     * the previous event. A slow ball gives one pulse per report, and the gap
+     * between two pulses wanders by a factor of two from mechanical and timer
+     * noise alone - which was read as the speed changing, and so as the step
+     * size changing. Counting what arrived over ~speed-window-ms averages that
+     * out. The total decays linearly with time instead of keeping a list of
+     * timestamps, and is empty after a pause, so a movement starts fine.
+     */
+    if (elapsed >= config->speed_window_ms) {
+        axis->recent_q = 0;
     } else {
-        /* Smoothed, or the multiplier jitters between adjacent reports. */
-        axis->avg_speed = (axis->avg_speed + speed) / 2;
+        axis->recent_q -= (axis->recent_q * elapsed) / config->speed_window_ms;
     }
+    axis->recent_q += magnitude * ACCEL_Q;
 
-    speed = axis->avg_speed;
+    uint32_t speed = ((uint64_t)axis->recent_q * 1000U) /
+                     ((uint64_t)ACCEL_Q * config->speed_window_ms * config->unit_divisor);
 
     uint32_t mult;
 
@@ -109,7 +122,20 @@ static int accel_handle_event(const struct device *dev, struct input_event *even
     LOG_DBG("code %u value %d at %u units/s -> x%u", (unsigned int)event->code, event->value,
             speed, mult);
 
-    event->value *= (int32_t)mult;
+    /*
+     * With unit-divisor above one the device reports fractions of a unit (see
+     * smoothing-steps on the trackball), so the multiplier is per whole unit
+     * and the fractions are carried rather than rounded.
+     */
+    int32_t scaled = event->value * (int32_t)mult;
+
+    if ((scaled < 0) != (axis->remainder < 0) && axis->remainder != 0) {
+        axis->remainder = 0; /* reversed direction: the leftover points the wrong way */
+    }
+    scaled += axis->remainder;
+
+    axis->remainder = scaled % (int32_t)config->unit_divisor;
+    event->value = scaled / (int32_t)config->unit_divisor;
 
     return ZMK_INPUT_PROC_CONTINUE;
 }
@@ -119,6 +145,11 @@ static int accel_init(const struct device *dev) {
 
     if (config->fast_speed <= config->slow_speed) {
         LOG_ERR("fast-speed must be greater than slow-speed");
+        return -EINVAL;
+    }
+
+    if (config->speed_window_ms == 0 || config->unit_divisor == 0) {
+        LOG_ERR("speed-window-ms and unit-divisor must not be zero");
         return -EINVAL;
     }
 
