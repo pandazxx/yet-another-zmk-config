@@ -34,8 +34,8 @@ properties:
     required: true
     description: |
       Speed at or below which the first cell (the minimum multiplier) is
-      used. This is also what the speed estimate resets to after a pause, so
-      a movement always starts at the fine step.
+      used. The speed estimate is empty after a pause, so a movement always
+      starts at the fine step.
 
   fast-speed:
     type: int
@@ -44,3 +44,19 @@ properties:
       Speed at or above which the second cell (the maximum multiplier) is
       used. Must be greater than slow-speed. Between the two the multiplier
       ramps linearly.
+
+  speed-window-ms:
+    type: int
+    default: 150
+    description: |
+      Speed is the movement seen over roughly this long, not the gap between
+      the last two events. Longer is steadier at low speed but slower to
+      react when the device speeds up.
+
+  unit-divisor:
+    type: int
+    default: 1
+    description: |
+      Number of device reports that make up one unit. Set this to the
+      trackball's smoothing-steps, which reports each pulse as that many
+      fractions; the multipliers and speeds stay per whole pulse.

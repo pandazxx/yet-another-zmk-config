@@ -12,6 +12,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
+#include <stdlib.h>
+
 #include <zephyr/sys/util.h>
 
 LOG_MODULE_REGISTER(bb_trackball, CONFIG_INPUT_LOG_LEVEL);
@@ -40,6 +42,7 @@ struct bb_trackball_config {
     uint16_t accel_max_mult;
     uint16_t accel_fast_ms;
     uint16_t accel_slow_ms;
+    uint8_t smoothing_steps;
     bool invert_x;
     bool invert_y;
     bool swap_xy;
@@ -58,6 +61,8 @@ struct bb_trackball_data {
     struct gpio_callback btn_cb;
     uint32_t last_report_ms;
     uint32_t avg_interval_ms;
+    /* Motion not yet reported, in 1/smoothing_steps of a pulse. Work-queue only. */
+    int32_t pending[2];
     struct k_work_delayable report_work;
     struct k_work_delayable probe_work;
     struct k_work btn_work;
@@ -139,43 +144,61 @@ static void bb_trackball_report_work(struct k_work *work) {
 
     uint32_t pulses = up + down + left + right;
 
-    if (pulses == 0) {
-        return;
+    if (pulses != 0) {
+        uint16_t mult = bb_trackball_multiplier(config, data, pulses);
+
+        /* HID mouse coordinates grow right and *down*. */
+        int32_t x = (right - left) * mult;
+        int32_t y = (down - up) * mult;
+
+        if (config->swap_xy) {
+            int32_t tmp = x;
+            x = y;
+            y = tmp;
+        }
+        if (config->invert_x) {
+            x = -x;
+        }
+        if (config->invert_y) {
+            y = -y;
+        }
+
+        LOG_DBG("pulses up=%d down=%d left=%d right=%d x%u -> x=%d y=%d (levels %d%d%d%d)", up,
+                down, left, right, (unsigned int)mult, x, y,
+                gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
+                gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
+
+        data->pending[0] += x * config->smoothing_steps;
+        data->pending[1] += y * config->smoothing_steps;
     }
 
-    uint16_t mult = bb_trackball_multiplier(config, data, pulses);
+    /*
+     * Each tick releases 1/smoothing_steps of what is owed, rounded up, so a
+     * lone pulse comes out as smoothing_steps steps one tick apart instead of
+     * one lump, and a burst drains in about the same number of ticks without
+     * a backlog building. With one step this reports everything at once.
+     */
+    int32_t out[2];
 
-    /* HID mouse coordinates grow right and *down*. */
-    int32_t x = (right - left) * mult;
-    int32_t y = (down - up) * mult;
+    for (uint8_t i = 0; i < 2; i++) {
+        int32_t owed = data->pending[i];
+        int32_t mag = DIV_ROUND_UP(abs(owed), config->smoothing_steps);
 
-    if (config->swap_xy) {
-        int32_t tmp = x;
-        x = y;
-        y = tmp;
-    }
-    if (config->invert_x) {
-        x = -x;
-    }
-    if (config->invert_y) {
-        y = -y;
+        out[i] = (owed < 0) ? -mag : mag;
+        data->pending[i] -= out[i];
     }
 
-    LOG_DBG("pulses up=%d down=%d left=%d right=%d x%u -> x=%d y=%d (levels %d%d%d%d)", up, down,
-            left, right, (unsigned int)mult, x, y, gpio_pin_get_dt(&config->dirs[BB_DIR_UP]),
-            gpio_pin_get_dt(&config->dirs[BB_DIR_DOWN]),
-            gpio_pin_get_dt(&config->dirs[BB_DIR_LEFT]),
-            gpio_pin_get_dt(&config->dirs[BB_DIR_RIGHT]));
-
-    if (x == 0 && y == 0) {
-        return;
+    if (data->pending[0] != 0 || data->pending[1] != 0) {
+        k_work_schedule(&data->report_work, K_MSEC(config->report_interval_ms));
     }
 
-    if (x != 0) {
-        input_report_rel(dev, INPUT_REL_X, x, y == 0, K_FOREVER);
+    if (out[0] != 0) {
+        input_report_rel(dev, INPUT_REL_X, out[0], out[1] == 0, K_FOREVER);
     }
-    if (y != 0) {
-        input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+    if (out[1] != 0) {
+        input_report_rel(dev, INPUT_REL_Y, out[1], true, K_FOREVER);
     }
 }
 
@@ -342,7 +365,8 @@ static int bb_trackball_init(const struct device *dev) {
         .accel_min_mult = DT_INST_PROP(n, accel_min_multiplier),                                   \
         .accel_max_mult = DT_INST_PROP(n, accel_max_multiplier),                                   \
         .accel_fast_ms = DT_INST_PROP(n, accel_fast_interval_ms),                                  \
-        .accel_slow_ms = DT_INST_PROP(n, accel_slow_interval_ms),                                 \
+        .accel_slow_ms = DT_INST_PROP(n, accel_slow_interval_ms),                                  \
+        .smoothing_steps = DT_INST_PROP(n, smoothing_steps),                                       \
         .invert_x = DT_INST_PROP(n, invert_x),                                                     \
         .invert_y = DT_INST_PROP(n, invert_y),                                                     \
         .swap_xy = DT_INST_PROP(n, swap_xy),                                                       \

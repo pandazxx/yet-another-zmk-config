@@ -58,6 +58,20 @@ properties:
       Lower values feel more responsive, higher values batch more movement
       into a single HID report.
 
+  smoothing-steps:
+    type: int
+    default: 1
+    description: |
+      Spread each pulse over this many report intervals instead of reporting
+      it at once. The ball gives only ~9 pulses a revolution, so a slow roll
+      is otherwise a staircase of lumps; with 4 steps at the default 10 ms
+      interval a pulse becomes a 40 ms glide. The cost is up to that much
+      added latency on the tail of a movement. 1 disables it.
+
+      Events are reported in 1/smoothing-steps of a pulse, so an acceleration
+      processor on the listener must be given the same number as its
+      unit-divisor.
+
   accel-min-multiplier:
     type: int
     default: 1
