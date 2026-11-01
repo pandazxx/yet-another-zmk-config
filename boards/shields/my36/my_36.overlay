@@ -27,18 +27,19 @@
         btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 
         report-interval-ms = <10>;
-
+        smoothing-steps = <4>;
     };
 
     // Pointer acceleration. Speed is in pulses per second: the ball emits
-    // only ~9 pulses per revolution, so 7/s is a careful nudge and 50/s is a
+    // only ~9 pulses per revolution, so ~10/s is a careful nudge and 50/s is a
     // deliberate spin. The cells on the listener are the pixels-per-pulse at
     // each end - 8 px for aiming, 128 px for crossing the screen.
     zip_accel: zip_accel {
         compatible = "zmk,input-processor-acceleration";
         #input-processor-cells = <2>;
         codes = <INPUT_REL_X INPUT_REL_Y>;
-        slow-speed = <7>;
+        unit-divisor = <4>;     // must match the trackball's smoothing-steps
+        slow-speed = <12>;      // flat fine step up to here, so slow rolls do not wobble
         fast-speed = <50>;
     };
 
