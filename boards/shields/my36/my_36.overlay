@@ -9,8 +9,11 @@
     //   VCC -> VCC (3.3V)      GND -> GND
     //   UP  -> D21             DWN -> D20
     //   LFT -> D19             RHT -> D18
-    //   BTN -> D15
-    //   BLU / RED / GRN / WHT are the trackball's LEDs, leave unconnected.
+    //   BTN, BLU / RED / GRN / WHT: leave unconnected. Clicks are on the
+    //   thumb keys (&mkp LCLK / RCLK) instead of the ball.
+    //
+    // The matrix uses D0, D1, D4-D10 and D14-D16; D2/D3 are kept free for an
+    // I2C OLED. Nothing else on the header is spare.
     //
     // The direction pins are pushed high by the breakout, so no internal
     // bias is requested here. If the module leaves them floating (phantom
@@ -24,7 +27,6 @@
         down-gpios  = <&pro_micro 20 GPIO_ACTIVE_HIGH>;
         left-gpios  = <&pro_micro 19 GPIO_ACTIVE_HIGH>;
         right-gpios = <&pro_micro 18 GPIO_ACTIVE_HIGH>;
-        btn-gpios   = <&pro_micro 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 
         report-interval-ms = <10>;
         smoothing-steps = <4>;

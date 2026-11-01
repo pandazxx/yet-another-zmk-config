@@ -1,4 +1,4 @@
-#include "my_36.dtsi"
+#include "my_36_test.dtsi"
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
 &adc {
