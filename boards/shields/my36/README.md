@@ -1,21 +1,62 @@
-# my_36 — test shield
+# my_36 — 36-key trackball keyboard
 
-A 3x3 test matrix on a nice!nano v2 with a pointing device bolted on. Three
-variants share the matrix (`my_36.dtsi`) and differ only in what they point
-with:
+A 36-key keyboard (three rows of five plus three thumb keys per hand) on a
+nice!nano v2, with a BlackBerry trackball. The two test variants,
+`my_36_js` and `my_36_duo`, are unchanged and still use the old 3x3 test
+matrix (`my_36_test.dtsi`).
 
-| Shield      | Pointing device      | Artifact        |
-| ----------- | -------------------- | --------------- |
-| `my_36`     | BlackBerry trackball | `xx_36.uf2`     |
-| `my_36_js`  | analog joystick      | `xx_36_js.uf2`  |
-| `my_36_duo` | both at once         | `xx_36_duo.uf2` |
+| Shield      | Matrix | Pointing device      | Artifact        |
+| ----------- | ------ | -------------------- | --------------- |
+| `my_36`     | 6x6    | BlackBerry trackball | `xx_36.uf2`     |
+| `my_36_js`  | 3x3    | analog joystick      | `xx_36_js.uf2`  |
+| `my_36_duo` | 3x3    | both at once         | `xx_36_duo.uf2` |
 
-Each has a matching `*_debug.uf2` that logs to a USB serial console. Pads left
-blank in the diagrams below are free for your own use.
+Each has a matching `*_debug.uf2` that logs to a USB serial console.
+
+## Pins
+
+6 rows x 6 columns is exactly 36 positions: 12 GPIOs for the matrix, 4 for the
+trackball, and `D2`/`D3` (the I2C pins) left free for an OLED. That is all 18
+header pins; nothing else is spare. The ball click is not wired (the thumb keys
+carry `&mkp LCLK` / `&mkp RCLK` instead).
+
+```
+              ┌──── USB ─────┐
+      row 0 ──┤ D1       RAW │
+      row 1 ──┤ D0       GND ├── ball GND
+              │ GND      RST │
+              │ GND      VCC ├── ball VCC
+      (I2C) ──┤ D2       D21 ├── ball UP
+      (I2C) ──┤ D3       D20 ├── ball DWN
+      col 0 ──┤ D4       D19 ├── ball LFT
+      col 1 ──┤ D5       D18 ├── ball RHT
+      col 2 ──┤ D6       D15 ├── row 3
+      col 3 ──┤ D7       D14 ├── row 2
+      col 4 ──┤ D8       D16 ├── row 4
+      col 5 ──┤ D9       D10 ├── row 5
+              └──────────────┘
+```
+
+### Key wiring
+
+Diodes run column to row (`col2row`). Each half is a 3x6 block of the matrix:
+the left hand is rows 0-2, the right hand rows 3-5, columns 0-4 are the five
+finger columns and column 5 is the three thumb keys.
+
+| Position (row,col in the layout picture) | Matrix row, col       |
+| ---------------------------------------- | --------------------- |
+| left fingers `0,0`-`2,4`                 | row 0-2, col 0-4      |
+| left thumbs `3,2` `3,3` `3,4`            | row 0, 1, 2 / col 5   |
+| right fingers `0,5`-`2,9`                | row 3-5, col 0-4      |
+| right thumbs `3,5` `3,6` `3,7`           | row 3, 4, 5 / col 5   |
+
+Bindings in `my_36.keymap` are in picture order: the three rows of ten, then
+the six thumb keys. To wire differently, only the `map` in `my_36.dtsi` needs
+to change. The keymap in the repo is a placeholder.
 
 ## Trackball wiring
 
-The breakout has 11 pads. Only 7 are needed:
+The breakout has 11 pads. Only 6 are needed:
 
 | Pad   | nice!nano | Notes                                      |
 | ----- | --------- | ------------------------------------------ |
@@ -25,41 +66,21 @@ The breakout has 11 pads. Only 7 are needed:
 | `DWN` | `D20`     |                                            |
 | `LFT` | `D19`     |                                            |
 | `RHT` | `D18`     |                                            |
-| `BTN` | `D15`     | ball click, active low                     |
 
-`BLU` / `RED` / `GRN` / `WHT` drive the LEDs inside the clear ball. Leave them
-unconnected, or tie one through a resistor to `VCC` if you want it lit.
+`BTN` and `BLU` / `RED` / `GRN` / `WHT` stay unconnected (the colour pads drive
+the LEDs inside the clear ball; tie one through a resistor to `VCC` if you want
+it lit).
 
-`D21`–`D18` and `D15` are a contiguous run on the right-hand header, just below
-`VCC`. They avoid `D10`/`D16` (the nRF52840 NFC pins) and the matrix pins
-(`D2`, `D3`, `D7` rows; `D4`, `D5`, `D16` columns).
-
-### Pinout
-
-```
-              ┌──── USB ─────┐
-              │ D1       RAW │
-              │ D0       GND ├── ball GND
-              │ GND      RST │
-              │ GND      VCC ├── ball VCC
-      row 0 ──┤ D2       D21 ├── ball UP
-      row 1 ──┤ D3       D20 ├── ball DWN
-      col 0 ──┤ D4       D19 ├── ball LFT
-      col 1 ──┤ D5       D18 ├── ball RHT
-              │ D6       D15 ├── ball BTN
-      row 2 ──┤ D7       D14 │
-              │ D8       D16 ├── col 2
-              │ D9       D10 │
-              └──────────────┘
-```
+`D10` and `D16` are the nRF52840's NFC pins and are matrix rows here;
+`my_36.dtsi` and `my_36_test.dtsi` set `nfct-pins-as-gpios`, which is a one-way UICR change.
 
 ## How it works
 
 `zmk,input-bb-trackball` (see `drivers/input/input_bb_trackball.c` at the repo
 root) puts a both-edge interrupt on each of the four direction pins, counts the
 pulses, and every `report-interval-ms` emits the accumulated
-`right - left` / `down - up` as `INPUT_REL_X` / `INPUT_REL_Y`. `BTN` is
-reported as `INPUT_BTN_0`, which the input listener turns into a left click.
+`right - left` / `down - up` as `INPUT_REL_X` / `INPUT_REL_Y`. If a `btn-gpios`
+is given, it is reported as `INPUT_BTN_0`, a left click; this keyboard leaves it out.
 
 ### Acceleration
 
@@ -171,7 +192,7 @@ Right/middle click are not wired to the ball; bind them in the keymap with
 
 # my_36_js — the analog joystick variant
 
-Same 3x3 matrix (shared via `my_36.dtsi`), but with a two-potentiometer
+Same 3x3 test matrix (shared via `my_36_test.dtsi`), but with a two-potentiometer
 joystick instead of the trackball, and mouse buttons on the bottom keymap row.
 
 Build it as `xx_36_js.uf2`; `xx_36_js_debug.uf2` is the same thing with the raw
@@ -303,5 +324,5 @@ click with `btn-code = <INPUT_BTN_1>`, because both drivers otherwise report
   read the other's input; the symptom is an axis frozen at the battery
   voltage, around 2716 mV.
 - **NFC pins.** `D16` is `P0.10`, which the nRF52840 reserves for the NFC
-  antenna by default. `my_36.dtsi` sets `nfct-pins-as-gpios` on `&uicr` so
+  antenna by default. `my_36.dtsi` and `my_36_test.dtsi` set `nfct-pins-as-gpios` on `&uicr` so
   that matrix column works on a freshly erased chip. The switch is one-way.
